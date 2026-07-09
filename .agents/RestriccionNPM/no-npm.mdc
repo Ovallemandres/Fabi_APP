@@ -1,0 +1,14 @@
+---
+description: Prohibición absoluta de npm y npx en este repositorio (ningún comando del ecosistema npm).
+alwaysApply: true
+---
+
+# Prohibición de npm (obligatorio)
+
+En este workspace **no debes usar** el ecosistema **npm** para ninguna tarea, bajo ninguna circunstancia habitual de asistencia:
+
+- **Prohibido ejecutar** (directa o indirectamente): `npm`, `npx`, `npm install`, `npm ci`, `npm run`, `npm exec`, `npm update`, `npm audit`, `npm cache`, etc.
+- **Prohibido** invocar scripts de `package.json` si ello implica llamar a `npm` o `npx` desde terminal o automatizaciones del agente.
+- Si hace falta regenerar `tailwind_output.css`, ajustar dependencias de Node o instalar paquetes, **no lo hagas con npm**; deja que el mantenedor use el flujo que defina fuera de esta regla (otro gestor, CI, o comandos locales que no pasen por npm).
+
+Los agentes **no asumen** que `node_modules` se instala o actualiza con npm en esta máquina.
