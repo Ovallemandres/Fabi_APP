@@ -1,5 +1,6 @@
 """Base settings shared by all environments."""
 
+import os
 from pathlib import Path
 
 import environ
@@ -13,7 +14,8 @@ env = environ.Env(
 
 environ.Env.read_env(BASE_DIR / ".env")
 
-SECRET_KEY = env("DJANGO_SECRET_KEY")
+# os.environ: django-environ treats values starting with `$` as proxies to other vars.
+SECRET_KEY = os.environ["DJANGO_SECRET_KEY"]
 DEBUG = env("DEBUG")
 ALLOWED_HOSTS = env("ALLOWED_HOSTS")
 
@@ -67,7 +69,7 @@ DATABASES = {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": env("DB_NAME"),
         "USER": env("DB_USER"),
-        "PASSWORD": env("DB_PASSWORD"),
+        "PASSWORD": os.environ["DB_PASSWORD"],
         "HOST": env("DB_HOST"),
         "PORT": env("DB_PORT", default="5432"),
     }
@@ -100,9 +102,9 @@ STORAGES = {
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Celery
-REDIS_URL = env("REDIS_URL", default="redis://localhost:6379/0")
-CELERY_BROKER_URL = env("CELERY_BROKER_URL", default=REDIS_URL)
-CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND", default=REDIS_URL)
+REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
+CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", REDIS_URL)
+CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", REDIS_URL)
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
