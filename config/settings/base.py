@@ -64,16 +64,20 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": env("DB_NAME"),
-        "USER": env("DB_USER"),
-        "PASSWORD": os.environ["DB_PASSWORD"],
-        "HOST": env("DB_HOST"),
-        "PORT": env("DB_PORT", default="5432"),
+# Prefer DATABASE_URL (Render). Fallback to discrete DB_* for local docker/dev.
+if os.environ.get("DATABASE_URL"):
+    DATABASES = {"default": env.db("DATABASE_URL")}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": env("DB_NAME"),
+            "USER": env("DB_USER"),
+            "PASSWORD": os.environ["DB_PASSWORD"],
+            "HOST": env("DB_HOST"),
+            "PORT": env("DB_PORT", default="5432"),
+        }
     }
-}
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
