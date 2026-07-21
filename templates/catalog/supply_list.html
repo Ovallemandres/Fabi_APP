@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Suministros — {{ block.super }}{% endblock %}
+{% block content %}
+  <h1>Suministros</h1>
+  <p><a href="{% url 'catalog:supply_create' %}">Nuevo suministro</a></p>
+  <form method="get" action="{% url 'catalog:supply_list' %}"
+        hx-get="{% url 'catalog:supply_list' %}" hx-target="#supply-table"
+        hx-trigger="keyup changed delay:300ms from:input[name=q], change from:input[name=include_inactive], submit">
+    <label>Buscar <input type="search" name="q" value="{{ q }}"></label>
+    <label><input type="checkbox" name="include_inactive" value="1" {% if include_inactive %}checked{% endif %}> Incluir inactivos</label>
+  </form>
+  <div id="supply-table">{% include "catalog/partials/supply_table.html" %}</div>
+{% endblock %}

@@ -1,0 +1,21 @@
+<table>
+  <thead><tr><th>Nombre</th><th>Estado</th><th></th></tr></thead>
+  <tbody>
+    {% for service in services %}
+      <tr>
+        <td>{{ service.name }}</td>
+        <td>{% if service.is_active %}Activo{% else %}Inactivo{% endif %}</td>
+        <td>
+          <a href="{% url 'catalog:service_update' service.pk %}">Editar</a>
+          {% if service.is_active %}
+            <form method="post" action="{% url 'catalog:service_deactivate' service.pk %}">{% csrf_token %}<button type="submit">Desactivar</button></form>
+          {% else %}
+            <form method="post" action="{% url 'catalog:service_activate' service.pk %}">{% csrf_token %}<button type="submit">Reactivar</button></form>
+          {% endif %}
+        </td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="3">Sin servicios.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>

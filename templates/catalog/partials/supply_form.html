@@ -1,0 +1,8 @@
+<section>
+  <h1>{{ title }}</h1>
+  <form method="post" action="{% if supply %}{% url 'catalog:supply_update' supply.pk %}{% else %}{% url 'catalog:supply_create' %}{% endif %}">
+    {% csrf_token %}{{ form.as_p }}
+    <button type="submit">Guardar</button>
+    <a href="{% url 'catalog:supply_list' %}">Cancelar</a>
+  </form>
+</section>

@@ -1,0 +1,10 @@
+<section>
+  <h1>{{ title }}</h1>
+  <form method="post"
+        {% if truck %}action="{% url 'fleet:truck_update' truck.pk %}"{% else %}action="{% url 'fleet:truck_create' %}"{% endif %}>
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Guardar</button>
+    <a href="{% if truck %}{% url 'fleet:truck_detail' truck.pk %}{% else %}{% url 'fleet:truck_list' %}{% endif %}">Cancelar</a>
+  </form>
+</section>

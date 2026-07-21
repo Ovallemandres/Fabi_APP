@@ -1,0 +1,8 @@
+<section>
+  <h1>{{ title }}</h1>
+  <form method="post" action="{% url 'billing:quote_create' %}">
+    {% csrf_token %}{{ form.as_p }}
+    <button type="submit">Crear</button>
+    <a href="{% url 'billing:quote_list' %}">Cancelar</a>
+  </form>
+</section>

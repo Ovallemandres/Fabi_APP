@@ -1,0 +1,8 @@
+<section>
+  <h1>{{ title }}</h1>
+  <form method="post" action="{% if service %}{% url 'catalog:service_update' service.pk %}{% else %}{% url 'catalog:service_create' %}{% endif %}">
+    {% csrf_token %}{{ form.as_p }}
+    <button type="submit">Guardar</button>
+    <a href="{% url 'catalog:service_list' %}">Cancelar</a>
+  </form>
+</section>

@@ -1,0 +1,22 @@
+<table>
+  <thead>
+    <tr>
+      <th>RIF</th>
+      <th>Razón social</th>
+      <th>Teléfono</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for owner in owners %}
+      <tr>
+        <td>{{ owner.rif }}</td>
+        <td><a href="{% url 'fleet:owner_detail' owner.pk %}">{{ owner.legal_name }}</a></td>
+        <td>{{ owner.phone }}</td>
+        <td><a href="{% url 'fleet:owner_update' owner.pk %}">Editar</a></td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="4">Sin propietarios.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>

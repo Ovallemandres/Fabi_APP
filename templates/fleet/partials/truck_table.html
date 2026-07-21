@@ -1,0 +1,26 @@
+<table>
+  <thead>
+    <tr>
+      <th>Placa</th>
+      <th>Marca / Modelo</th>
+      <th>Tipo</th>
+      <th>Propietario</th>
+      <th>Conductor</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for truck in trucks %}
+      <tr>
+        <td><a href="{% url 'fleet:truck_detail' truck.pk %}">{{ truck.plate }}</a></td>
+        <td>{{ truck.brand }} {{ truck.model }}</td>
+        <td>{{ truck.get_truck_type_display }}</td>
+        <td>{{ truck.owner.legal_name }}</td>
+        <td>{% if truck.driver %}{{ truck.driver.full_name }}{% else %}—{% endif %}</td>
+        <td><a href="{% url 'fleet:truck_update' truck.pk %}">Editar</a></td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="6">Sin camiones.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>

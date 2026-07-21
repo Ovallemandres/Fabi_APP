@@ -1,0 +1,18 @@
+<table>
+  <thead><tr><th>Código</th><th>Nombre</th><th>%</th><th>Base</th><th>Aplica</th><th>Activo</th><th></th></tr></thead>
+  <tbody>
+    {% for rule in rules %}
+      <tr>
+        <td>{{ rule.code }}</td>
+        <td>{{ rule.name }}</td>
+        <td>{{ rule.percentage }}</td>
+        <td>{{ rule.get_base_display }}</td>
+        <td>{{ rule.get_applies_to_display }}</td>
+        <td>{{ rule.is_active }}</td>
+        <td><a href="{% url 'core:fiscal_rule_update' rule.pk %}">Editar</a></td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="7">Sin reglas.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>

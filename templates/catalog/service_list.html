@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Servicios — {{ block.super }}{% endblock %}
+{% block content %}
+  <h1>Servicios</h1>
+  <p><a href="{% url 'catalog:service_create' %}">Nuevo servicio</a></p>
+  <form method="get" action="{% url 'catalog:service_list' %}"
+        hx-get="{% url 'catalog:service_list' %}" hx-target="#service-table"
+        hx-trigger="keyup changed delay:300ms from:input[name=q], change from:input[name=include_inactive], submit">
+    <label>Buscar <input type="search" name="q" value="{{ q }}"></label>
+    <label><input type="checkbox" name="include_inactive" value="1" {% if include_inactive %}checked{% endif %}> Incluir inactivos</label>
+  </form>
+  <div id="service-table">{% include "catalog/partials/service_table.html" %}</div>
+{% endblock %}

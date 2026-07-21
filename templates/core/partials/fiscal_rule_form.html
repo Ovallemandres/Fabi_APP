@@ -1,0 +1,8 @@
+<section>
+  <h1>{{ title }}</h1>
+  <form method="post" action="{% url 'core:fiscal_rule_update' rule.pk %}">
+    {% csrf_token %}{{ form.as_p }}
+    <button type="submit">Guardar</button>
+    <a href="{% url 'core:fiscal_rule_list' %}">Cancelar</a>
+  </form>
+</section>

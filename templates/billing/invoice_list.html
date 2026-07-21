@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block title %}Facturas — {{ block.super }}{% endblock %}
+{% block content %}
+  <h1>Facturas</h1>
+  {% include "billing/partials/invoice_table.html" %}
+{% endblock %}

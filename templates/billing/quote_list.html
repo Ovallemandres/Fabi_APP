@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}Presupuestos — {{ block.super }}{% endblock %}
+{% block content %}
+  <h1>Presupuestos</h1>
+  <p><a href="{% url 'billing:quote_create' %}">Nuevo presupuesto</a></p>
+  {% include "billing/partials/quote_table.html" %}
+{% endblock %}

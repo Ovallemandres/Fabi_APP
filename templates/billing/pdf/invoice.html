@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="utf-8"><title>{{ invoice.number }}</title></head>
+<body>
+  <h1>Factura {{ invoice.number }}</h1>
+  <p>{{ company.legal_name }} — {{ company.rif }}</p>
+  <p>{{ company.fiscal_address }}</p>
+  <p>Cliente: {{ invoice.quote.truck.owner.legal_name }} ({{ invoice.quote.truck.owner.rif }})</p>
+  <p>Dirección: {{ invoice.quote.truck.owner.fiscal_address }}</p>
+  <p>Camión: {{ invoice.quote.truck.plate }}</p>
+  <p>Tasa factura: {{ invoice.exchange_rate }}</p>
+  <table>
+    <thead><tr><th>Descripción</th><th>Cant.</th><th>P. unit VES</th><th>Total VES</th></tr></thead>
+    <tbody>
+      {% for line in billable_lines %}
+        <tr>
+          <td>{{ line.description }}</td>
+          <td>{{ line.quantity }}</td>
+          <td>{{ line.unit_price_ves }}</td>
+          <td>{{ line.line_total_ves }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p>Base imponible: {{ invoice.base_imponible_ves }}</p>
+  <p>IVA: {{ invoice.iva_ves }}</p>
+  <p>Total factura: {{ invoice.total_ves }}</p>
+  <h2>Detalle de pago</h2>
+  {% for group in snapshot.groups %}
+    <h3>{{ group.line_type }}</h3>
+    <ul>
+      {% for r in group.retenciones %}
+        <li>{{ r.name }}: {{ r.amount }}</li>
+      {% endfor %}
+    </ul>
+  {% endfor %}
+  <p>Total retenciones: {{ invoice.total_retenciones_ves }}</p>
+  <p>Total a pagar: {{ invoice.total_a_pagar_ves }}</p>
+</body>
+</html>

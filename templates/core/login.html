@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Iniciar sesión — {{ block.super }}{% endblock %}
+{% block content %}
+<section>
+  <h1>Iniciar sesión</h1>
+  <p>Acceso de administrador (staff).</p>
+  <form method="post" action="{% url 'core:login' %}">
+    {% csrf_token %}
+    {{ form.as_p }}
+    {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+    <button type="submit">Entrar</button>
+  </form>
+</section>
+{% endblock %}

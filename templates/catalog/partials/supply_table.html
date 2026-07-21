@@ -1,0 +1,22 @@
+<table>
+  <thead><tr><th>Nombre</th><th>Unidad</th><th>Estado</th><th></th></tr></thead>
+  <tbody>
+    {% for supply in supplies %}
+      <tr>
+        <td>{{ supply.name }}</td>
+        <td>{{ supply.unit }}</td>
+        <td>{% if supply.is_active %}Activo{% else %}Inactivo{% endif %}</td>
+        <td>
+          <a href="{% url 'catalog:supply_update' supply.pk %}">Editar</a>
+          {% if supply.is_active %}
+            <form method="post" action="{% url 'catalog:supply_deactivate' supply.pk %}">{% csrf_token %}<button type="submit">Desactivar</button></form>
+          {% else %}
+            <form method="post" action="{% url 'catalog:supply_activate' supply.pk %}">{% csrf_token %}<button type="submit">Reactivar</button></form>
+          {% endif %}
+        </td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="4">Sin suministros.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>

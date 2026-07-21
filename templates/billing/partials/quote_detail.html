@@ -1,0 +1,59 @@
+<article>
+  <h1>{{ quote.number }}</h1>
+  <dl>
+    <dt>Estado</dt><dd>{{ quote.get_status_display }}</dd>
+    <dt>Camión</dt><dd>{{ quote.truck.plate }} — {{ quote.truck.brand }} {{ quote.truck.model }}</dd>
+    <dt>Propietario</dt><dd>{{ quote.truck.owner.legal_name }} ({{ quote.truck.owner.rif }})</dd>
+    <dt>Tasa presupuesto</dt><dd>{{ quote.exchange_rate }}</dd>
+    <dt>Subtotal USD</dt><dd>{{ quote.subtotal_usd }}</dd>
+    <dt>IVA USD</dt><dd>{{ quote.iva_usd }}</dd>
+    <dt>Total USD</dt><dd>{{ quote.total_usd }}</dd>
+  </dl>
+
+  <h2>Líneas</h2>
+  <table>
+    <thead><tr><th>Tipo</th><th>Descripción</th><th>Cant.</th><th>P. cliente USD</th><th>Costo USD</th><th>Embebido</th></tr></thead>
+    <tbody>
+      {% for line in lines %}
+        <tr>
+          <td>{{ line.get_line_type_display }}</td>
+          <td>{{ line.description }}</td>
+          <td>{{ line.quantity }}</td>
+          <td>{% if line.is_embedded %}—{% else %}{{ line.unit_price_usd }}{% endif %}</td>
+          <td>{{ line.cost_usd }}</td>
+          <td>{{ line.is_embedded }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="6">Sin líneas.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>Agregar servicio (+ embebidos en el mismo formulario)</h2>
+  <form method="post" action="{% url 'billing:quote_add_service_line' quote.pk %}">
+    {% csrf_token %}
+    {{ service_form.as_p }}
+    <h3>Suministros embebidos</h3>
+    {{ embed_formset.management_form }}
+    {% for f in embed_formset %}
+      <fieldset>{{ f.as_p }}</fieldset>
+    {% endfor %}
+    <button type="submit">Agregar servicio</button>
+  </form>
+
+  <h2>Agregar suministro facturable</h2>
+  <form method="post" action="{% url 'billing:quote_add_supply_line' quote.pk %}">
+    {% csrf_token %}{{ supply_form.as_p }}
+    <button type="submit">Agregar suministro</button>
+  </form>
+
+  <h2>Acciones</h2>
+  <form method="post" action="{% url 'billing:quote_enqueue_pdf' quote.pk %}">
+    {% csrf_token %}<button type="submit">Generar PDF</button>
+  </form>
+  <form method="post" action="{% url 'billing:quote_convert' quote.pk %}">
+    {% csrf_token %}{{ convert_form.as_p }}
+    <button type="submit">Convertir a factura</button>
+  </form>
+  <p><a href="{% url 'billing:quote_list' %}">Volver</a></p>
+</article>

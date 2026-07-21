@@ -1,0 +1,44 @@
+<article>
+  <h1>{{ invoice.number }}</h1>
+  <dl>
+    <dt>Estado</dt><dd>{{ invoice.get_status_display }}</dd>
+    <dt>Presupuesto</dt><dd><a href="{% url 'billing:quote_detail' invoice.quote.pk %}">{{ invoice.quote.number }}</a></dd>
+    <dt>Tasa factura</dt><dd>{{ invoice.exchange_rate }}</dd>
+    <dt>Base imponible</dt><dd>{{ invoice.base_imponible_ves }}</dd>
+    <dt>IVA</dt><dd>{{ invoice.iva_ves }}</dd>
+    <dt>Total factura</dt><dd>{{ invoice.total_ves }}</dd>
+    <dt>Total retenciones</dt><dd>{{ invoice.total_retenciones_ves }}</dd>
+    <dt>Total a pagar</dt><dd>{{ invoice.total_a_pagar_ves }}</dd>
+  </dl>
+
+  <h2>Líneas facturables</h2>
+  <table>
+    <thead><tr><th>Tipo</th><th>Descripción</th><th>Cant.</th><th>P. unit VES</th><th>Total VES</th></tr></thead>
+    <tbody>
+      {% for line in billable_lines %}
+        <tr>
+          <td>{{ line.get_line_type_display }}</td>
+          <td>{{ line.description }}</td>
+          <td>{{ line.quantity }}</td>
+          <td>{{ line.unit_price_ves }}</td>
+          <td>{{ line.line_total_ves }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="5">Sin líneas.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>Acciones</h2>
+  {% if invoice.status == "borrador" %}
+    <form method="post" action="{% url 'billing:invoice_emit' invoice.pk %}">
+      {% csrf_token %}<button type="submit">Emitir (+ PDF)</button>
+    </form>
+  {% endif %}
+  {% if invoice.status != "anulada" %}
+    <form method="post" action="{% url 'billing:invoice_void' invoice.pk %}">
+      {% csrf_token %}<button type="submit">Anular</button>
+    </form>
+  {% endif %}
+  <p><a href="{% url 'billing:invoice_list' %}">Volver</a></p>
+</article>

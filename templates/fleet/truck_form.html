@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} — {{ block.super }}{% endblock %}
+{% block content %}
+  {% include "fleet/partials/truck_form.html" %}
+{% endblock %}

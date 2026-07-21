@@ -1,0 +1,22 @@
+<article>
+  <h1>{{ truck.plate }}</h1>
+  <dl>
+    <dt>Marca</dt><dd>{{ truck.brand }}</dd>
+    <dt>Modelo</dt><dd>{{ truck.model }}</dd>
+    <dt>VIN</dt><dd>{{ truck.vin|default:"—" }}</dd>
+    <dt>Año</dt><dd>{{ truck.year }}</dd>
+    <dt>Tipo</dt><dd>{{ truck.get_truck_type_display }}</dd>
+    <dt>Propietario</dt>
+    <dd><a href="{% url 'fleet:owner_detail' truck.owner.pk %}">{{ truck.owner.legal_name }} ({{ truck.owner.rif }})</a></dd>
+    <dt>Conductor / responsable</dt>
+    <dd>{% if truck.driver %}{{ truck.driver.full_name }}{% else %}—{% endif %}</dd>
+  </dl>
+  <p>
+    <a href="{% url 'fleet:truck_update' truck.pk %}">Editar</a>
+    <a href="{% url 'fleet:truck_list' %}">Volver al listado</a>
+  </p>
+  <form method="post" action="{% url 'fleet:truck_delete' truck.pk %}">
+    {% csrf_token %}
+    <button type="submit">Eliminar</button>
+  </form>
+</article>

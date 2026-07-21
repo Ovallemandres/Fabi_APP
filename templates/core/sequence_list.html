@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}Secuencias — {{ block.super }}{% endblock %}
+{% block content %}
+  <h1>Secuencias de numeración</h1>
+  <p>Ajusta <code>next_number</code> / prefijo para alinear con la facturación real.</p>
+  {% include "core/partials/sequence_table.html" %}
+{% endblock %}

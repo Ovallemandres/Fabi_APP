@@ -5,3 +5,4 @@ celery==5.5.3
 redis==6.2.0
 whitenoise==6.9.0
 gunicorn==23.0.0
+weasyprint==65.1

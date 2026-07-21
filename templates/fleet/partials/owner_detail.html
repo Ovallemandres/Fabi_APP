@@ -1,0 +1,24 @@
+<article>
+  <h1>{{ owner.legal_name }}</h1>
+  <dl>
+    <dt>RIF</dt><dd>{{ owner.rif }}</dd>
+    <dt>Dirección fiscal</dt><dd>{{ owner.fiscal_address }}</dd>
+    <dt>Teléfono</dt><dd>{{ owner.phone }}</dd>
+  </dl>
+  <p>
+    <a href="{% url 'fleet:owner_update' owner.pk %}">Editar</a>
+  </p>
+  <form method="post" action="{% url 'fleet:owner_delete' owner.pk %}">
+    {% csrf_token %}
+    <button type="submit">Eliminar</button>
+  </form>
+  <h2>Camiones</h2>
+  <ul>
+    {% for truck in trucks %}
+      <li><a href="{% url 'fleet:truck_detail' truck.pk %}">{{ truck.plate }} — {{ truck.brand }} {{ truck.model }}</a></li>
+    {% empty %}
+      <li>Sin camiones.</li>
+    {% endfor %}
+  </ul>
+  <p><a href="{% url 'fleet:owner_list' %}">Volver al listado</a></p>
+</article>

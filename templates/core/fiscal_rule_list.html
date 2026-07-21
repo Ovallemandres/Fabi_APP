@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Reglas fiscales — {{ block.super }}{% endblock %}
+{% block content %}
+  <h1>Reglas fiscales</h1>
+  <form method="get">
+    <label><input type="checkbox" name="include_inactive" value="1" {% if include_inactive %}checked{% endif %}> Incluir inactivas</label>
+    <button type="submit">Filtrar</button>
+  </form>
+  <div id="fiscal-rule-table">{% include "core/partials/fiscal_rule_table.html" %}</div>
+{% endblock %}

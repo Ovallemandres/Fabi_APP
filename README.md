@@ -24,12 +24,15 @@ docker compose up -d
 copy .env.example .env
 ```
 
-4. **Migrar y correr el servidor**
+4. **Migrar, crear admin y correr el servidor**
 
 ```powershell
 python manage.py migrate
+python manage.py createsuperuser
 python manage.py runserver
 ```
+
+El MVP usa un único rol **admin** (`is_staff=True`). Todas las pantallas de negocio exigen login; `/health/` es público.
 
 5. **Worker Celery** (otra terminal, con el venv activo)
 
@@ -39,7 +42,17 @@ celery -A config worker -l info --pool=solo
 
 En Windows usa `--pool=solo` (el pool prefork por defecto no es fiable aquí).
 
-Smoke checks: `http://127.0.0.1:8000/` y `http://127.0.0.1:8000/health/`
+Smoke checks: `http://127.0.0.1:8000/health/` (público) y login en `/login/`.
+
+### PDF (WeasyPrint)
+
+En Render, el worker/web puede necesitar librerías del sistema para WeasyPrint (cairo/pango). Si el build falla, añade el buildpack o apt packages recomendados por WeasyPrint para Linux.
+
+Tras migrar, crea el admin:
+
+```powershell
+python manage.py createsuperuser
+```
 
 ### Sin Docker
 

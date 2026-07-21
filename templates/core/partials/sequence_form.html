@@ -1,0 +1,9 @@
+<section>
+  <h1>{{ title }}</h1>
+  <p>{{ sequence.get_document_kind_display }} — {{ sequence.year }}</p>
+  <form method="post" action="{% url 'core:sequence_update' sequence.pk %}">
+    {% csrf_token %}{{ form.as_p }}
+    <button type="submit">Guardar</button>
+    <a href="{% url 'core:sequence_list' %}">Cancelar</a>
+  </form>
+</section>

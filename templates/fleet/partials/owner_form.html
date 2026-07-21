@@ -1,0 +1,10 @@
+<section>
+  <h1>{{ title }}</h1>
+  <form method="post"
+        {% if owner %}action="{% url 'fleet:owner_update' owner.pk %}"{% else %}action="{% url 'fleet:owner_create' %}"{% endif %}>
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Guardar</button>
+    <a href="{% if owner %}{% url 'fleet:owner_detail' owner.pk %}{% else %}{% url 'fleet:owner_list' %}{% endif %}">Cancelar</a>
+  </form>
+</section>

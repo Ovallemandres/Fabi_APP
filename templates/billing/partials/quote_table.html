@@ -1,0 +1,16 @@
+<table>
+  <thead><tr><th>Número</th><th>Camión</th><th>Estado</th><th>Total USD</th><th></th></tr></thead>
+  <tbody>
+    {% for quote in quotes %}
+      <tr>
+        <td><a href="{% url 'billing:quote_detail' quote.pk %}">{{ quote.number }}</a></td>
+        <td>{{ quote.truck.plate }}</td>
+        <td>{{ quote.get_status_display }}</td>
+        <td>{{ quote.total_usd }}</td>
+        <td><a href="{% url 'billing:quote_detail' quote.pk %}">Ver</a></td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="5">Sin presupuestos.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="utf-8"><title>{{ quote.number }}</title></head>
+<body>
+  <h1>Presupuesto {{ quote.number }}</h1>
+  <p>{{ company.legal_name }} — {{ company.rif }}</p>
+  <p>{{ company.fiscal_address }}</p>
+  <p>Cliente: {{ quote.truck.owner.legal_name }} ({{ quote.truck.owner.rif }})</p>
+  <p>Camión: {{ quote.truck.plate }} — {{ quote.truck.brand }} {{ quote.truck.model }}</p>
+  <p>Tasa: {{ quote.exchange_rate }}</p>
+  <table>
+    <thead><tr><th>Descripción</th><th>Cant.</th><th>P. USD</th></tr></thead>
+    <tbody>
+      {% for line in lines %}
+        <tr>
+          <td>{% if line.is_embedded %}↳ {% endif %}{{ line.description }}</td>
+          <td>{{ line.quantity }}</td>
+          <td>{% if line.is_embedded %}—{% else %}{{ line.unit_price_usd }}{% endif %}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p>Subtotal USD: {{ quote.subtotal_usd }}</p>
+  <p>IVA USD: {{ quote.iva_usd }}</p>
+  <p>Total USD: {{ quote.total_usd }}</p>
+</body>
+</html>

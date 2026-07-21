@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block title %}{{ owner.legal_name }} — {{ block.super }}{% endblock %}
+{% block content %}
+  {% include "fleet/partials/owner_detail.html" %}
+{% endblock %}

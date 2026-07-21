@@ -1,0 +1,3 @@
+{% extends "base.html" %}
+{% block title %}{{ invoice.number }} — {{ block.super }}{% endblock %}
+{% block content %}{% include "billing/partials/invoice_detail.html" %}{% endblock %}
