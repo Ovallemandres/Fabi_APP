@@ -1,4 +1,19 @@
-<section>
-  <h1>{{ app_name }}</h1>
-  <p>Estado: {{ status }}</p>
+<section class="space-y-6">
+  <div class="rounded-2xl bg-surface px-6 py-8 shadow-neo transition-all duration-300 ease-in-out">
+    <h1 class="mb-2 text-3xl font-bold text-ink">{{ app_name }}</h1>
+    <p class="text-muted">
+      Sistema de gestión, presupuestos y facturación de flotas.
+    </p>
+  </div>
+
+  <div class="grid gap-4 sm:grid-cols-2">
+    {% url 'fleet:index' as fleet_url %}
+    {% url 'catalog:index' as catalog_url %}
+    {% url 'billing:index' as billing_url %}
+    {% url 'core:settings_hub' as settings_url %}
+    {% include "components/section_card.html" with href=fleet_url title="Flota" description="Propietarios, camiones y conductores." %}
+    {% include "components/section_card.html" with href=catalog_url title="Catálogo" description="Servicios y suministros dinámicos." %}
+    {% include "components/section_card.html" with href=billing_url title="Facturación" description="Presupuestos en USD y facturas en VES." %}
+    {% include "components/section_card.html" with href=settings_url title="Configuración" description="Emisor, reglas fiscales y secuencias." %}
+  </div>
 </section>

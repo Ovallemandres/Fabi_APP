@@ -1,10 +1,20 @@
-<section>
-  <h1>{{ title }}</h1>
-  <form method="post"
-        {% if owner %}action="{% url 'fleet:owner_update' owner.pk %}"{% else %}action="{% url 'fleet:owner_create' %}"{% endif %}>
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Guardar</button>
-    <a href="{% if owner %}{% url 'fleet:owner_detail' owner.pk %}{% else %}{% url 'fleet:owner_list' %}{% endif %}">Cancelar</a>
-  </form>
+<section class="mx-auto max-w-xl space-y-6">
+  {% url 'fleet:owner_list' as owner_list %}
+  {% if owner %}
+    {% url 'fleet:owner_detail' owner.pk as cancel_url %}
+  {% else %}
+    {% url 'fleet:owner_list' as cancel_url %}
+  {% endif %}
+  {% include "components/page_header.html" with title=title back_href=owner_list back_label="← Propietarios" %}
+
+  <div class="rounded-2xl bg-surface px-5 py-5 shadow-neo">
+    <form
+      method="post"
+      {% if owner %}action="{% url 'fleet:owner_update' owner.pk %}"{% else %}action="{% url 'fleet:owner_create' %}"{% endif %}
+    >
+      {% csrf_token %}
+      {% include "components/form_fields.html" %}
+      {% include "components/form_actions.html" with cancel_href=cancel_url %}
+    </form>
+  </div>
 </section>

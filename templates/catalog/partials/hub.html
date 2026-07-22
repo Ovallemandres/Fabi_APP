@@ -1,7 +1,10 @@
-<nav>
-  <h1>Catálogo</h1>
-  <ul>
-    <li><a href="{% url 'catalog:service_list' %}">Servicios</a></li>
-    <li><a href="{% url 'catalog:supply_list' %}">Suministros</a></li>
-  </ul>
-</nav>
+<section class="space-y-6">
+  <div>
+    <h1 class="text-3xl font-bold text-ink">Catálogo</h1>
+    <p class="mt-1 text-muted">Plantillas de servicios y suministros (sin precios fijos).</p>
+  </div>
+  <div class="grid gap-4 sm:grid-cols-2">
+    {% include "components/section_card.html" with href=services_url title="Servicios" description="Mano de obra, mantenimiento y reparaciones." meta=services_meta %}
+    {% include "components/section_card.html" with href=supplies_url title="Suministros" description="Autopartes y consumibles." meta=supplies_meta %}
+  </div>
+</section>

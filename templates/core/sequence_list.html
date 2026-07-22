@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Secuencias — {{ block.super }}{% endblock %}
 {% block content %}
-  <h1>Secuencias de numeración</h1>
-  <p>Ajusta <code>next_number</code> / prefijo para alinear con la facturación real.</p>
+  {% url 'core:settings_hub' as settings_hub %}
+  {% include "components/page_header.html" with title="Secuencias de numeración" subtitle="Ajusta next_number / prefijo para alinear con la facturación real." back_href=settings_hub back_label="← Configuración" %}
   {% include "core/partials/sequence_table.html" %}
 {% endblock %}

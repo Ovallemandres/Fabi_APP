@@ -1,0 +1,39 @@
+<section class="space-y-6">
+  {% url 'billing:index' as billing_hub %}
+  {% include "components/page_header.html" with title="Nuevo presupuesto" subtitle="Paso 1: seleccione el camión. Luego elija presupuesto de servicios o de suministros (por separado)." back_href=billing_hub back_label="← Facturación" %}
+
+  {% if trucks %}
+    <div class="space-y-4">
+      {% for truck in trucks %}
+        <article class="rounded-2xl bg-surface px-5 py-5 shadow-neo transition-all duration-300 ease-in-out hover:shadow-neo-hover">
+          <div class="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <h2 class="text-lg font-semibold text-ink">{{ truck.plate }} — {{ truck.brand }} {{ truck.model }}</h2>
+              <dl class="mt-2 grid gap-1 text-sm text-muted sm:grid-cols-2">
+                <div><span class="font-medium text-ink">Año:</span> {{ truck.year }}</div>
+                <div><span class="font-medium text-ink">Tipo:</span> {{ truck.get_truck_type_display }}</div>
+                <div><span class="font-medium text-ink">VIN:</span> {{ truck.vin|default:"—" }}</div>
+                <div><span class="font-medium text-ink">Propietario:</span> {{ truck.owner.legal_name }} ({{ truck.owner.rif }})</div>
+                <div><span class="font-medium text-ink">Conductor:</span> {% if truck.driver %}{{ truck.driver.full_name }}{% else %}—{% endif %}</div>
+              </dl>
+            </div>
+            <div class="flex flex-col gap-2">
+              <a
+                href="{% url 'billing:quote_wizard' truck.pk 'services' %}"
+                class="rounded-full bg-brand px-4 py-2 text-center text-sm font-medium text-surface shadow-neo-sm transition-all duration-300 ease-in-out hover:opacity-90 active:shadow-neo-pressed"
+              >Presupuesto de servicios</a>
+              <a
+                href="{% url 'billing:quote_wizard' truck.pk 'supplies' %}"
+                class="rounded-full px-4 py-2 text-center text-sm font-medium text-ink shadow-neo-sm transition-all duration-300 ease-in-out hover:text-brand active:shadow-neo-inset"
+              >Presupuesto de suministros</a>
+              <a href="{% url 'fleet:truck_detail' truck.pk %}" class="text-center text-xs text-muted transition-all duration-300 ease-in-out hover:text-brand">Ver ficha completa</a>
+            </div>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    {% url 'fleet:truck_create' as truck_create %}
+    {% include "components/empty_state.html" with message="No hay camiones. Cree uno en Flota primero." action_href=truck_create action_label="Crear camión" %}
+  {% endif %}
+</section>

@@ -1,28 +1,35 @@
-<table>
-  <thead>
-    <tr>
-      <th>Nombre</th>
-      <th>Documento</th>
-      <th>Teléfono</th>
-      <th></th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for driver in drivers %}
-      <tr>
-        <td>{{ driver.full_name }}</td>
-        <td>{{ driver.id_document }}</td>
-        <td>{{ driver.phone }}</td>
-        <td>
-          <a href="{% url 'fleet:driver_update' driver.pk %}">Editar</a>
-          <form method="post" action="{% url 'fleet:driver_delete' driver.pk %}">
-            {% csrf_token %}
-            <button type="submit">Eliminar</button>
-          </form>
-        </td>
-      </tr>
-    {% empty %}
-      <tr><td colspan="4">Sin conductores.</td></tr>
-    {% endfor %}
-  </tbody>
-</table>
+{% if drivers %}
+  <div class="overflow-x-auto rounded-2xl bg-surface p-4 shadow-neo">
+    <table class="w-full text-left text-sm">
+      <thead>
+        <tr class="text-muted">
+          <th class="px-2 py-2 font-medium">Nombre</th>
+          <th class="px-2 py-2 font-medium">Documento</th>
+          <th class="px-2 py-2 font-medium">Teléfono</th>
+          <th class="px-2 py-2 font-medium"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for driver in drivers %}
+          <tr class="text-ink transition-all duration-300 ease-in-out hover:bg-shadow-dark/10">
+            <td class="px-2 py-3 font-medium">{{ driver.full_name }}</td>
+            <td class="px-2 py-3 text-muted">{{ driver.id_document }}</td>
+            <td class="px-2 py-3 text-muted">{{ driver.phone }}</td>
+            <td class="px-2 py-3">
+              <div class="flex flex-wrap items-center justify-end gap-2">
+                <a href="{% url 'fleet:driver_update' driver.pk %}" class="text-sm text-muted transition-all duration-300 ease-in-out hover:text-brand">Editar</a>
+                <form method="post" action="{% url 'fleet:driver_delete' driver.pk %}">
+                  {% csrf_token %}
+                  <button type="submit" class="text-sm text-error transition-all duration-300 ease-in-out hover:opacity-80">Eliminar</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  {% url 'fleet:driver_create' as driver_create %}
+  {% include "components/empty_state.html" with message="Sin conductores." action_href=driver_create action_label="Crear conductor" %}
+{% endif %}

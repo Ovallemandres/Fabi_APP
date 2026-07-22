@@ -1,13 +1,33 @@
 {% extends "base.html" %}
 {% block title %}Servicios — {{ block.super }}{% endblock %}
 {% block content %}
-  <h1>Servicios</h1>
-  <p><a href="{% url 'catalog:service_create' %}">Nuevo servicio</a></p>
-  <form method="get" action="{% url 'catalog:service_list' %}"
-        hx-get="{% url 'catalog:service_list' %}" hx-target="#service-table"
-        hx-trigger="keyup changed delay:300ms from:input[name=q], change from:input[name=include_inactive], submit">
-    <label>Buscar <input type="search" name="q" value="{{ q }}"></label>
-    <label><input type="checkbox" name="include_inactive" value="1" {% if include_inactive %}checked{% endif %}> Incluir inactivos</label>
+  {% url 'catalog:index' as catalog_hub %}
+  {% url 'catalog:service_create' as service_create %}
+  {% include "components/page_header.html" with title="Servicios" subtitle="Plantillas de mano de obra y mantenimiento." back_href=catalog_hub back_label="← Catálogo" action_href=service_create action_label="Nuevo servicio" %}
+
+  <form
+    method="get"
+    action="{% url 'catalog:service_list' %}"
+    class="mb-4 space-y-3"
+    hx-get="{% url 'catalog:service_list' %}"
+    hx-target="#service-table"
+    hx-indicator="#service-search-indicator"
+    hx-trigger="keyup changed delay:300ms from:input[name=q], change from:input[name=include_inactive], submit"
+  >
+    {% include "components/search_field.html" with value=q placeholder="Nombre del servicio…" indicator_id="service-search-indicator" %}
+    <label class="flex items-center gap-3 text-sm text-ink">
+      <input
+        type="checkbox"
+        name="include_inactive"
+        value="1"
+        class="h-4 w-4 rounded border-0 text-brand shadow-neo-inset transition-all duration-300 ease-in-out focus:ring-2 focus:ring-brand"
+        {% if include_inactive %}checked{% endif %}
+      >
+      Incluir inactivos
+    </label>
   </form>
-  <div id="service-table">{% include "catalog/partials/service_table.html" %}</div>
+
+  <div id="service-table">
+    {% include "catalog/partials/service_table.html" %}
+  </div>
 {% endblock %}

@@ -1,44 +1,94 @@
-<article>
-  <h1>{{ invoice.number }}</h1>
-  <dl>
-    <dt>Estado</dt><dd>{{ invoice.get_status_display }}</dd>
-    <dt>Presupuesto</dt><dd><a href="{% url 'billing:quote_detail' invoice.quote.pk %}">{{ invoice.quote.number }}</a></dd>
-    <dt>Tasa factura</dt><dd>{{ invoice.exchange_rate }}</dd>
-    <dt>Base imponible</dt><dd>{{ invoice.base_imponible_ves }}</dd>
-    <dt>IVA</dt><dd>{{ invoice.iva_ves }}</dd>
-    <dt>Total factura</dt><dd>{{ invoice.total_ves }}</dd>
-    <dt>Total retenciones</dt><dd>{{ invoice.total_retenciones_ves }}</dd>
-    <dt>Total a pagar</dt><dd>{{ invoice.total_a_pagar_ves }}</dd>
+<article class="space-y-6">
+  {% url 'billing:invoice_list' as invoice_list %}
+  <div>
+    <a href="{{ invoice_list }}" class="text-sm text-muted transition-all duration-300 ease-in-out hover:text-brand">← Facturas</a>
+    <div class="mt-2 flex flex-wrap items-center gap-3">
+      <h1 class="text-2xl font-bold text-ink">{{ invoice.number }}</h1>
+      {% include "components/badge.html" with label=invoice.get_status_display %}
+    </div>
+  </div>
+
+  <dl class="grid gap-3 rounded-2xl bg-surface px-5 py-4 text-sm shadow-neo sm:grid-cols-2">
+    <div>
+      <dt class="font-medium text-ink">Presupuesto</dt>
+      <dd class="text-muted">
+        <a href="{% url 'billing:quote_detail' invoice.quote.pk %}" class="text-brand transition-all duration-300 ease-in-out hover:opacity-80">
+          {{ invoice.quote.number }}
+        </a>
+      </dd>
+    </div>
+    <div>
+      <dt class="font-medium text-ink">Tasa factura</dt>
+      <dd class="text-muted">{{ invoice.exchange_rate }}</dd>
+    </div>
+    <div>
+      <dt class="font-medium text-ink">Base imponible</dt>
+      <dd class="text-muted">{{ invoice.base_imponible_ves }}</dd>
+    </div>
+    <div>
+      <dt class="font-medium text-ink">IVA</dt>
+      <dd class="text-muted">{{ invoice.iva_ves }}</dd>
+    </div>
+    <div>
+      <dt class="font-medium text-ink">Total factura</dt>
+      <dd class="font-semibold text-ink">{{ invoice.total_ves }}</dd>
+    </div>
+    <div>
+      <dt class="font-medium text-ink">Total retenciones</dt>
+      <dd class="text-muted">{{ invoice.total_retenciones_ves }}</dd>
+    </div>
+    <div class="sm:col-span-2">
+      <dt class="font-medium text-ink">Total a pagar</dt>
+      <dd class="text-lg font-bold text-brand">{{ invoice.total_a_pagar_ves }}</dd>
+    </div>
   </dl>
 
-  <h2>Líneas facturables</h2>
-  <table>
-    <thead><tr><th>Tipo</th><th>Descripción</th><th>Cant.</th><th>P. unit VES</th><th>Total VES</th></tr></thead>
-    <tbody>
-      {% for line in billable_lines %}
-        <tr>
-          <td>{{ line.get_line_type_display }}</td>
-          <td>{{ line.description }}</td>
-          <td>{{ line.quantity }}</td>
-          <td>{{ line.unit_price_ves }}</td>
-          <td>{{ line.line_total_ves }}</td>
-        </tr>
-      {% empty %}
-        <tr><td colspan="5">Sin líneas.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  <div>
+    <h2 class="mb-2 text-lg font-semibold text-ink">Líneas facturables</h2>
+    <div class="overflow-x-auto rounded-2xl bg-surface p-4 shadow-neo">
+      <table class="w-full text-left text-sm">
+        <thead>
+          <tr class="text-muted">
+            <th class="py-2 font-medium">Tipo</th>
+            <th class="font-medium">Descripción</th>
+            <th class="font-medium">Cant.</th>
+            <th class="font-medium">P. unit VES</th>
+            <th class="font-medium">Total VES</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for line in billable_lines %}
+            <tr class="text-ink">
+              <td class="py-2">{{ line.get_line_type_display }}</td>
+              <td>{{ line.description }}</td>
+              <td>{{ line.quantity }}</td>
+              <td>{{ line.unit_price_ves }}</td>
+              <td>{{ line.line_total_ves }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="5" class="py-3 text-muted">Sin líneas.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
 
-  <h2>Acciones</h2>
-  {% if invoice.status == "borrador" %}
-    <form method="post" action="{% url 'billing:invoice_emit' invoice.pk %}">
-      {% csrf_token %}<button type="submit">Emitir (+ PDF)</button>
-    </form>
-  {% endif %}
-  {% if invoice.status != "anulada" %}
-    <form method="post" action="{% url 'billing:invoice_void' invoice.pk %}">
-      {% csrf_token %}<button type="submit">Anular</button>
-    </form>
-  {% endif %}
-  <p><a href="{% url 'billing:invoice_list' %}">Volver</a></p>
+  <div class="space-y-4 rounded-2xl bg-surface px-5 py-5 shadow-neo">
+    <h2 class="text-lg font-semibold text-ink">Acciones</h2>
+    <div class="flex flex-wrap gap-3">
+      {% if invoice.status == "borrador" %}
+        <form method="post" action="{% url 'billing:invoice_emit' invoice.pk %}">
+          {% csrf_token %}
+          {% include "components/btn_primary.html" with label="Emitir (+ PDF)" type="submit" %}
+        </form>
+      {% endif %}
+      {% if invoice.status != "anulada" %}
+        <form method="post" action="{% url 'billing:invoice_void' invoice.pk %}">
+          {% csrf_token %}
+          {% include "components/btn_danger.html" with label="Anular" type="submit" %}
+        </form>
+      {% endif %}
+      {% include "components/btn_secondary.html" with href=invoice_list label="Volver" %}
+    </div>
+  </div>
 </article>

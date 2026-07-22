@@ -1,22 +1,33 @@
-<table>
-  <thead>
-    <tr>
-      <th>RIF</th>
-      <th>Razón social</th>
-      <th>Teléfono</th>
-      <th></th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for owner in owners %}
-      <tr>
-        <td>{{ owner.rif }}</td>
-        <td><a href="{% url 'fleet:owner_detail' owner.pk %}">{{ owner.legal_name }}</a></td>
-        <td>{{ owner.phone }}</td>
-        <td><a href="{% url 'fleet:owner_update' owner.pk %}">Editar</a></td>
-      </tr>
-    {% empty %}
-      <tr><td colspan="4">Sin propietarios.</td></tr>
-    {% endfor %}
-  </tbody>
-</table>
+{% if owners %}
+  <div class="overflow-x-auto rounded-2xl bg-surface p-4 shadow-neo">
+    <table class="w-full text-left text-sm">
+      <thead>
+        <tr class="text-muted">
+          <th class="px-2 py-2 font-medium">RIF</th>
+          <th class="px-2 py-2 font-medium">Razón social</th>
+          <th class="px-2 py-2 font-medium">Teléfono</th>
+          <th class="px-2 py-2 font-medium"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for owner in owners %}
+          <tr class="text-ink transition-all duration-300 ease-in-out hover:bg-shadow-dark/10">
+            <td class="px-2 py-3">{{ owner.rif }}</td>
+            <td class="px-2 py-3">
+              <a href="{% url 'fleet:owner_detail' owner.pk %}" class="font-medium text-brand transition-all duration-300 ease-in-out hover:opacity-80">
+                {{ owner.legal_name }}
+              </a>
+            </td>
+            <td class="px-2 py-3 text-muted">{{ owner.phone }}</td>
+            <td class="px-2 py-3 text-right">
+              <a href="{% url 'fleet:owner_update' owner.pk %}" class="text-sm text-muted transition-all duration-300 ease-in-out hover:text-brand">Editar</a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  {% url 'fleet:owner_create' as owner_create %}
+  {% include "components/empty_state.html" with message="Sin propietarios." action_href=owner_create action_label="Crear propietario" %}
+{% endif %}

@@ -11,7 +11,7 @@ from django.views.decorators.http import require_http_methods, require_POST
 from apps.core.decorators import staff_login_required
 
 from .forms import ServiceForm, SupplyForm
-from .models import Service, Supply
+from .models import Service, ServiceDefaultEmbed, Supply
 from .services import (
     activate_service,
     activate_supply,
@@ -19,6 +19,7 @@ from .services import (
     deactivate_supply,
     search_services,
     search_supplies,
+    sync_service_default_embeds,
 )
 
 
@@ -38,8 +39,16 @@ def index(request: HttpRequest) -> HttpResponse:
 
     Context:
         - section: str
+        - services_url, supplies_url: str
+        - services_meta, supplies_meta: str
     """
-    context = {"section": "hub"}
+    context = {
+        "section": "hub",
+        "services_url": reverse("catalog:service_list"),
+        "supplies_url": reverse("catalog:supply_list"),
+        "services_meta": f"{Service.objects.filter(is_active=True).count()} activos",
+        "supplies_meta": f"{Supply.objects.filter(is_active=True).count()} activos",
+    }
     template = "catalog/partials/hub.html" if _is_htmx(request) else "catalog/hub.html"
     return render(request, template, context)
 
@@ -66,6 +75,42 @@ def service_list(request: HttpRequest) -> HttpResponse:
     return render(request, "catalog/service_list.html", context)
 
 
+def _service_form_context(
+    *,
+    form: ServiceForm,
+    title: str,
+    service: Service | None = None,
+) -> dict:
+    """Shared context for service create/update (default embeds UI)."""
+    from decimal import Decimal
+
+    active_supplies = list(Supply.objects.filter(is_active=True).order_by("name"))
+    selected_embeds: dict[int, ServiceDefaultEmbed] = {}
+    if service is not None:
+        selected_embeds = {
+            emb.supply_id: emb
+            for emb in service.default_embeds.select_related("supply").all()
+        }
+    embed_rows = []
+    for supply in active_supplies:
+        emb = selected_embeds.get(supply.pk)
+        embed_rows.append(
+            {
+                "supply": supply,
+                "selected": emb is not None,
+                "quantity": emb.default_quantity if emb else Decimal("1"),
+                "cost_usd": emb.default_cost_usd if emb else supply.default_cost_usd,
+            }
+        )
+    return {
+        "form": form,
+        "title": title,
+        "service": service,
+        "embed_rows": embed_rows,
+        "embeds_panel_open": any(row["selected"] for row in embed_rows),
+    }
+
+
 @staff_login_required
 @require_http_methods(["GET", "POST"])
 def service_create(request: HttpRequest) -> HttpResponse:
@@ -74,16 +119,19 @@ def service_create(request: HttpRequest) -> HttpResponse:
     Context:
         - form: ServiceForm
         - title: str
+        - active_supplies: list[Supply]
+        - selected_embeds: dict[int, ServiceDefaultEmbed]
     """
     form = ServiceForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
         service = form.save()
+        sync_service_default_embeds(service, request)
         messages.success(request, f"Servicio {service.name} creado.")
         url = reverse("catalog:service_list")
         if _is_htmx(request):
             return _hx_redirect(url)
         return redirect(url)
-    context = {"form": form, "title": "Nuevo servicio"}
+    context = _service_form_context(form=form, title="Nuevo servicio")
     template = (
         "catalog/partials/service_form.html"
         if _is_htmx(request)
@@ -101,17 +149,22 @@ def service_update(request: HttpRequest, pk: int) -> HttpResponse:
         - form: ServiceForm
         - service: Service
         - title: str
+        - active_supplies: list[Supply]
+        - selected_embeds: dict[int, ServiceDefaultEmbed]
     """
     service = get_object_or_404(Service, pk=pk)
     form = ServiceForm(request.POST or None, instance=service)
     if request.method == "POST" and form.is_valid():
         form.save()
+        sync_service_default_embeds(service, request)
         messages.success(request, "Servicio actualizado.")
         url = reverse("catalog:service_list")
         if _is_htmx(request):
             return _hx_redirect(url)
         return redirect(url)
-    context = {"form": form, "service": service, "title": "Editar servicio"}
+    context = _service_form_context(
+        form=form, title="Editar servicio", service=service
+    )
     template = (
         "catalog/partials/service_form.html"
         if _is_htmx(request)

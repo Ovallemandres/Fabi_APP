@@ -1,59 +1,108 @@
-<article>
-  <h1>{{ quote.number }}</h1>
-  <dl>
-    <dt>Estado</dt><dd>{{ quote.get_status_display }}</dd>
-    <dt>Camión</dt><dd>{{ quote.truck.plate }} — {{ quote.truck.brand }} {{ quote.truck.model }}</dd>
-    <dt>Propietario</dt><dd>{{ quote.truck.owner.legal_name }} ({{ quote.truck.owner.rif }})</dd>
-    <dt>Tasa presupuesto</dt><dd>{{ quote.exchange_rate }}</dd>
-    <dt>Subtotal USD</dt><dd>{{ quote.subtotal_usd }}</dd>
-    <dt>IVA USD</dt><dd>{{ quote.iva_usd }}</dd>
-    <dt>Total USD</dt><dd>{{ quote.total_usd }}</dd>
+<article class="space-y-6">
+  {% url 'billing:index' as billing_hub %}
+  <div>
+    <a href="{{ billing_hub }}" class="text-sm text-muted transition-all duration-300 ease-in-out hover:text-brand">← Facturación</a>
+    <div class="mt-2 flex flex-wrap items-center gap-3">
+      <h1 class="text-2xl font-bold text-ink">{{ quote.number }}</h1>
+      {% include "components/badge.html" with label=quote.get_status_display %}
+    </div>
+    <p class="text-sm text-muted">{{ quote.get_quote_kind_display }}</p>
+  </div>
+
+  <dl class="grid gap-3 rounded-2xl bg-surface px-5 py-4 text-sm shadow-neo sm:grid-cols-2">
+    <div>
+      <dt class="font-medium text-ink">Camión</dt>
+      <dd class="text-muted">{{ quote.truck.plate }} — {{ quote.truck.brand }} {{ quote.truck.model }}</dd>
+    </div>
+    <div>
+      <dt class="font-medium text-ink">Propietario</dt>
+      <dd class="text-muted">{{ quote.truck.owner.legal_name }} ({{ quote.truck.owner.rif }})</dd>
+    </div>
+    <div>
+      <dt class="font-medium text-ink">Tasa BCV presupuesto</dt>
+      <dd class="text-muted">{{ quote.exchange_rate }}</dd>
+    </div>
+    <div>
+      <dt class="font-medium text-ink">Subtotal USD</dt>
+      <dd class="text-muted">{{ quote.subtotal_usd }}</dd>
+    </div>
+    <div>
+      <dt class="font-medium text-ink">IVA USD</dt>
+      <dd class="text-muted">{{ quote.iva_usd }}</dd>
+    </div>
+    <div>
+      <dt class="font-medium text-ink">Total USD</dt>
+      <dd class="font-semibold text-ink">{{ quote.total_usd }}</dd>
+    </div>
+    <div>
+      <dt class="font-medium text-ink">Equiv. Bs (tasa presupuesto)</dt>
+      <dd class="text-muted">{{ total_ves_equiv }}</dd>
+    </div>
   </dl>
 
-  <h2>Líneas</h2>
-  <table>
-    <thead><tr><th>Tipo</th><th>Descripción</th><th>Cant.</th><th>P. cliente USD</th><th>Costo USD</th><th>Embebido</th></tr></thead>
-    <tbody>
-      {% for line in lines %}
-        <tr>
-          <td>{{ line.get_line_type_display }}</td>
-          <td>{{ line.description }}</td>
-          <td>{{ line.quantity }}</td>
-          <td>{% if line.is_embedded %}—{% else %}{{ line.unit_price_usd }}{% endif %}</td>
-          <td>{{ line.cost_usd }}</td>
-          <td>{{ line.is_embedded }}</td>
-        </tr>
-      {% empty %}
-        <tr><td colspan="6">Sin líneas.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  <div>
+    <h2 class="mb-2 text-lg font-semibold text-ink">Líneas</h2>
+    <div class="overflow-x-auto rounded-2xl bg-surface p-4 shadow-neo">
+      <table class="w-full text-left text-sm">
+        <thead>
+          <tr class="text-muted">
+            <th class="py-2 font-medium">Tipo</th>
+            <th class="font-medium">Descripción</th>
+            <th class="font-medium">Cant.</th>
+            <th class="font-medium">P. cliente USD</th>
+            <th class="font-medium">Costo USD</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for line in lines %}
+            <tr class="text-ink">
+              <td class="py-2">{{ line.get_line_type_display }}</td>
+              <td>{% if line.is_embedded %}<span class="text-muted">↳ </span>{% endif %}{{ line.description }}</td>
+              <td>{{ line.quantity }}</td>
+              <td>{% if line.is_embedded %}—{% else %}{{ line.unit_price_usd }}{% endif %}</td>
+              <td>{{ line.cost_usd }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="5" class="py-3 text-muted">Sin líneas.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
 
-  <h2>Agregar servicio (+ embebidos en el mismo formulario)</h2>
-  <form method="post" action="{% url 'billing:quote_add_service_line' quote.pk %}">
-    {% csrf_token %}
-    {{ service_form.as_p }}
-    <h3>Suministros embebidos</h3>
-    {{ embed_formset.management_form }}
-    {% for f in embed_formset %}
-      <fieldset>{{ f.as_p }}</fieldset>
-    {% endfor %}
-    <button type="submit">Agregar servicio</button>
-  </form>
+  <div class="space-y-4 rounded-2xl bg-surface px-5 py-5 shadow-neo">
+    <h2 class="text-lg font-semibold text-ink">Acciones</h2>
+    <div class="flex flex-wrap gap-3">
+      <form method="post" action="{% url 'billing:quote_enqueue_pdf' quote.pk %}">
+        {% csrf_token %}
+        {% include "components/btn_secondary.html" with label="Generar PDF" type="submit" %}
+      </form>
+      {% if can_send %}
+        <form method="post" action="{% url 'billing:quote_mark_enviado' quote.pk %}">
+          {% csrf_token %}
+          {% include "components/btn_secondary.html" with label="Guardar / marcar enviado al cliente" type="submit" %}
+        </form>
+      {% endif %}
+      {% if can_accept %}
+        <form method="post" action="{% url 'billing:quote_mark_aceptado' quote.pk %}">
+          {% csrf_token %}
+          {% include "components/btn_secondary.html" with label="Cliente aceptó" type="submit" %}
+        </form>
+      {% endif %}
+    </div>
 
-  <h2>Agregar suministro facturable</h2>
-  <form method="post" action="{% url 'billing:quote_add_supply_line' quote.pk %}">
-    {% csrf_token %}{{ supply_form.as_p }}
-    <button type="submit">Agregar suministro</button>
-  </form>
-
-  <h2>Acciones</h2>
-  <form method="post" action="{% url 'billing:quote_enqueue_pdf' quote.pk %}">
-    {% csrf_token %}<button type="submit">Generar PDF</button>
-  </form>
-  <form method="post" action="{% url 'billing:quote_convert' quote.pk %}">
-    {% csrf_token %}{{ convert_form.as_p }}
-    <button type="submit">Convertir a factura</button>
-  </form>
-  <p><a href="{% url 'billing:quote_list' %}">Volver</a></p>
+    {% if can_invoice %}
+      <div class="pt-4">
+        <h3 class="mb-2 font-medium text-ink">Continuar a facturación</h3>
+        <p class="mb-3 text-sm text-muted">
+          Debe introducir una <strong class="text-ink">nueva</strong> tasa BCV (no se reutiliza la del presupuesto). Se recalcularán todos los montos en bolívares.
+        </p>
+        <form method="post" action="{% url 'billing:quote_convert' quote.pk %}" class="space-y-3">
+          {% csrf_token %}
+          {% include "components/form_fields.html" with form=convert_form %}
+          {% include "components/btn_primary.html" with label="Crear factura" type="submit" %}
+        </form>
+      </div>
+    {% endif %}
+  </div>
 </article>

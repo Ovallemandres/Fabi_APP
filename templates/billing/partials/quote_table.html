@@ -1,16 +1,37 @@
-<table>
-  <thead><tr><th>Número</th><th>Camión</th><th>Estado</th><th>Total USD</th><th></th></tr></thead>
-  <tbody>
-    {% for quote in quotes %}
-      <tr>
-        <td><a href="{% url 'billing:quote_detail' quote.pk %}">{{ quote.number }}</a></td>
-        <td>{{ quote.truck.plate }}</td>
-        <td>{{ quote.get_status_display }}</td>
-        <td>{{ quote.total_usd }}</td>
-        <td><a href="{% url 'billing:quote_detail' quote.pk %}">Ver</a></td>
-      </tr>
-    {% empty %}
-      <tr><td colspan="5">Sin presupuestos.</td></tr>
-    {% endfor %}
-  </tbody>
-</table>
+{% if quotes %}
+  <div class="overflow-x-auto rounded-2xl bg-surface p-4 shadow-neo">
+    <table class="w-full text-left text-sm">
+      <thead>
+        <tr class="text-muted">
+          <th class="px-2 py-2 font-medium">Número</th>
+          <th class="px-2 py-2 font-medium">Camión</th>
+          <th class="px-2 py-2 font-medium">Tipo</th>
+          <th class="px-2 py-2 font-medium">Estado</th>
+          <th class="px-2 py-2 font-medium">Total USD</th>
+          <th class="px-2 py-2 font-medium"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for quote in quotes %}
+          <tr class="text-ink transition-all duration-300 ease-in-out hover:bg-shadow-dark/10">
+            <td class="px-2 py-3">
+              <a href="{% url 'billing:quote_detail' quote.pk %}" class="font-medium text-brand transition-all duration-300 ease-in-out hover:opacity-80">
+                {{ quote.number }}
+              </a>
+            </td>
+            <td class="px-2 py-3 text-muted">{{ quote.truck.plate }}</td>
+            <td class="px-2 py-3 text-muted">{{ quote.get_quote_kind_display }}</td>
+            <td class="px-2 py-3">{% include "components/badge.html" with label=quote.get_status_display %}</td>
+            <td class="px-2 py-3 font-medium">{{ quote.total_usd }}</td>
+            <td class="px-2 py-3 text-right">
+              <a href="{% url 'billing:quote_detail' quote.pk %}" class="text-sm text-muted transition-all duration-300 ease-in-out hover:text-brand">Ver</a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  {% url 'billing:quote_create' as quote_create %}
+  {% include "components/empty_state.html" with message="Sin presupuestos." action_href=quote_create action_label="Nuevo presupuesto" %}
+{% endif %}

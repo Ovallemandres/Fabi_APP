@@ -1,7 +1,16 @@
 {% extends "base.html" %}
 {% block title %}Presupuestos — {{ block.super }}{% endblock %}
 {% block content %}
-  <h1>Presupuestos</h1>
-  <p><a href="{% url 'billing:quote_create' %}">Nuevo presupuesto</a></p>
+  {% url 'billing:index' as billing_hub %}
+  {% url 'billing:quote_create' as quote_create %}
+  {% include "components/page_header.html" with title="Presupuestos" subtitle=status_label back_href=billing_hub back_label="← Facturación" action_href=quote_create action_label="Nuevo presupuesto" %}
+
+  <div class="mb-4 flex flex-wrap gap-2">
+    <a href="{% url 'billing:quote_list' %}" class="rounded-full px-3 py-1.5 text-sm transition-all duration-300 ease-in-out {% if not status_filter %}font-semibold text-brand shadow-neo-inset{% else %}text-ink shadow-neo-sm{% endif %}">Todos</a>
+    <a href="{% url 'billing:quote_list' %}?status=active" class="rounded-full px-3 py-1.5 text-sm transition-all duration-300 ease-in-out {% if status_filter == 'active' %}font-semibold text-brand shadow-neo-inset{% else %}text-ink shadow-neo-sm{% endif %}">Activos</a>
+    <a href="{% url 'billing:quote_list' %}?status=aceptado" class="rounded-full px-3 py-1.5 text-sm transition-all duration-300 ease-in-out {% if status_filter == 'aceptado' %}font-semibold text-brand shadow-neo-inset{% else %}text-ink shadow-neo-sm{% endif %}">Aceptados</a>
+    <a href="{% url 'billing:quote_list' %}?status=facturado" class="rounded-full px-3 py-1.5 text-sm transition-all duration-300 ease-in-out {% if status_filter == 'facturado' %}font-semibold text-brand shadow-neo-inset{% else %}text-ink shadow-neo-sm{% endif %}">Facturados</a>
+    <a href="{% url 'billing:quote_list' %}?status=anulado" class="rounded-full px-3 py-1.5 text-sm transition-all duration-300 ease-in-out {% if status_filter == 'anulado' %}font-semibold text-brand shadow-neo-inset{% else %}text-ink shadow-neo-sm{% endif %}">Anulados</a>
+  </div>
   {% include "billing/partials/quote_table.html" %}
 {% endblock %}

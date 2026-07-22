@@ -11,6 +11,7 @@ urlpatterns = [
     path("health/", views.health, name="health"),
     path("login/", views.StaffLoginView.as_view(), name="login"),
     path("logout/", views.logout_view, name="logout"),
+    path("settings/", views.settings_hub, name="settings_hub"),
     path("settings/company/", views.company_settings_edit, name="company_settings"),
     path("settings/fiscal-rules/", views.fiscal_rule_list, name="fiscal_rule_list"),
     path(

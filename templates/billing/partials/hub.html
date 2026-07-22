@@ -1,7 +1,35 @@
-<nav>
-  <h1>Facturación</h1>
-  <ul>
-    <li><a href="{% url 'billing:quote_list' %}">Presupuestos</a></li>
-    <li><a href="{% url 'billing:invoice_list' %}">Facturas</a></li>
-  </ul>
-</nav>
+<section class="space-y-8">
+  <div>
+    <h1 class="text-3xl font-bold text-ink">Facturación</h1>
+    <p class="mt-1 text-muted">
+      Histórico de presupuestos y facturas: activos, aceptados, emitidos y finalizados.
+    </p>
+  </div>
+
+  <div>
+    <div class="mb-3 flex flex-wrap items-end justify-between gap-3">
+      <h2 class="text-xl font-semibold text-ink">Presupuestos</h2>
+      <a
+        href="{% url 'billing:quote_create' %}"
+        class="rounded-full bg-brand px-4 py-2 text-sm font-medium text-surface shadow-neo-sm transition-all duration-300 ease-in-out hover:opacity-90 active:shadow-neo-pressed"
+      >Nuevo presupuesto</a>
+    </div>
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {% include "components/section_card.html" with href=quotes_all_url title="Todos" description="Histórico completo de presupuestos." meta=quotes_all_meta %}
+      {% include "components/section_card.html" with href=quotes_active_url title="Activos / en proceso" description="Borrador, enviado y pendientes de confirmación." meta=quotes_active_meta %}
+      {% include "components/section_card.html" with href=quotes_accepted_url title="Aceptados" description="Presupuestos aceptados por el cliente." meta=quotes_accepted_meta %}
+      {% include "components/section_card.html" with href=quotes_invoiced_url title="Facturados" description="Ya convertidos a factura." meta=quotes_invoiced_meta %}
+      {% include "components/section_card.html" with href=quotes_void_url title="Anulados" description="Presupuestos anulados." meta=quotes_void_meta %}
+    </div>
+  </div>
+
+  <div>
+    <h2 class="mb-3 text-xl font-semibold text-ink">Facturas</h2>
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {% include "components/section_card.html" with href=invoices_all_url title="Todas" description="Histórico completo de facturas." meta=invoices_all_meta %}
+      {% include "components/section_card.html" with href=invoices_draft_url title="Borrador" description="Pre-emisión, aún editables." meta=invoices_draft_meta %}
+      {% include "components/section_card.html" with href=invoices_issued_url title="Emitidas" description="Numeradas y finalizadas." meta=invoices_issued_meta %}
+      {% include "components/section_card.html" with href=invoices_void_url title="Anuladas" description="Facturas anuladas." meta=invoices_void_meta %}
+    </div>
+  </div>
+</section>

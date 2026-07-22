@@ -1,10 +1,23 @@
 {% extends "base.html" %}
 {% block title %}Reglas fiscales — {{ block.super }}{% endblock %}
 {% block content %}
-  <h1>Reglas fiscales</h1>
-  <form method="get">
-    <label><input type="checkbox" name="include_inactive" value="1" {% if include_inactive %}checked{% endif %}> Incluir inactivas</label>
-    <button type="submit">Filtrar</button>
+  {% url 'core:settings_hub' as settings_hub %}
+  {% include "components/page_header.html" with title="Reglas fiscales" subtitle="Retenciones configurables del motor fiscal." back_href=settings_hub back_label="← Configuración" %}
+
+  <form method="get" class="mb-4" x-data @change="$el.submit()">
+    <label class="flex items-center gap-3 text-sm text-ink">
+      <input
+        type="checkbox"
+        name="include_inactive"
+        value="1"
+        class="h-4 w-4 rounded border-0 text-brand shadow-neo-inset transition-all duration-300 ease-in-out focus:ring-2 focus:ring-brand"
+        {% if include_inactive %}checked{% endif %}
+      >
+      Incluir inactivas
+    </label>
   </form>
-  <div id="fiscal-rule-table">{% include "core/partials/fiscal_rule_table.html" %}</div>
+
+  <div id="fiscal-rule-table">
+    {% include "core/partials/fiscal_rule_table.html" %}
+  </div>
 {% endblock %}

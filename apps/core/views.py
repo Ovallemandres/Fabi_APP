@@ -12,7 +12,12 @@ from django.views.decorators.http import require_http_methods, require_POST
 
 from apps.core.decorators import staff_login_required
 
-from .forms import CompanySettingsForm, DocumentSequenceForm, FiscalRuleForm
+from .forms import (
+    CompanySettingsForm,
+    DocumentSequenceForm,
+    FiscalRuleForm,
+    StaffAuthenticationForm,
+)
 from .models import DocumentSequence, FiscalRule
 from .services import get_company_settings, list_fiscal_rules
 
@@ -46,6 +51,7 @@ class StaffLoginView(LoginView):
     """Staff-only login form for the MVP single-admin role."""
 
     template_name = "core/login.html"
+    authentication_form = StaffAuthenticationForm
     redirect_authenticated_user = True
 
     def form_valid(self, form):  # type: ignore[no-untyped-def]
@@ -63,6 +69,23 @@ def logout_view(request: HttpRequest) -> HttpResponse:
     """Log out the current user and redirect to login."""
     logout(request)
     return redirect(reverse_lazy("core:login"))
+
+
+@staff_login_required
+def settings_hub(request: HttpRequest) -> HttpResponse:
+    """Configuration section hub.
+
+    Context:
+        - company_url, fiscal_url, sequences_url: str
+    """
+    context = {
+        "company_url": reverse("core:company_settings"),
+        "fiscal_url": reverse("core:fiscal_rule_list"),
+        "sequences_url": reverse("core:sequence_list"),
+    }
+    if request.headers.get("HX-Request") == "true":
+        return render(request, "core/partials/settings_hub.html", context)
+    return render(request, "core/settings_hub.html", context)
 
 
 def _is_htmx(request: HttpRequest) -> bool:

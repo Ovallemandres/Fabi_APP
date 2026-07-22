@@ -1,0 +1,165 @@
+<section class="space-y-6">
+  <div>
+    <a href="{% url 'billing:quote_create' %}" class="text-sm text-muted transition-all duration-300 ease-in-out hover:text-brand">← Cambiar camión</a>
+    <h1 class="mt-2 text-2xl font-bold text-ink">Presupuesto de {{ kind_label|lower }}</h1>
+  </div>
+
+  <article class="rounded-2xl bg-surface px-5 py-4 shadow-neo-inset">
+    <h2 class="font-semibold text-ink">{{ truck.plate }} — {{ truck.brand }} {{ truck.model }} ({{ truck.year }})</h2>
+    <p class="text-sm text-muted">
+      Propietario: {{ truck.owner.legal_name }} ({{ truck.owner.rif }}) ·
+      Conductor: {% if truck.driver %}{{ truck.driver.full_name }}{% else %}—{% endif %}
+    </p>
+  </article>
+
+  <form method="post" action="{% url 'billing:quote_wizard' truck.pk quote_kind %}" class="space-y-6">
+    {% csrf_token %}
+
+    <div class="rounded-2xl bg-surface px-5 py-5 shadow-neo">
+      <h2 class="mb-3 text-lg font-semibold text-ink">Tasa BCV</h2>
+      <p class="mb-3 text-sm text-muted">Ingrese la tasa de cambio del Banco Central de Venezuela para este presupuesto.</p>
+      {% include "components/form_fields.html" with form=meta_form %}
+    </div>
+
+    <div class="rounded-2xl bg-surface px-5 py-5 shadow-neo">
+      <h2 class="mb-2 text-lg font-semibold text-ink">Catálogo de {{ kind_label|lower }}</h2>
+      <p class="mb-4 text-sm text-muted">
+        Seleccione uno o varios ítems. Solo los seleccionados mostrarán cantidad y precios para confirmar o ajustar.
+        {% if quote_kind == "services" %}
+          En cada servicio puede añadir suministros embebidos del catálogo.
+        {% endif %}
+      </p>
+
+      {{ line_formset.management_form }}
+
+      {% if line_formset.forms %}
+        <div class="space-y-3">
+          {% for form in line_formset %}
+            <div
+              class="rounded-2xl bg-surface shadow-neo transition-all duration-300 ease-in-out"
+              x-data="{
+                selected: {% if form.selected.value %}true{% else %}false{% endif %},
+                showEmbeds: {% if form.has_default_embeds %}true{% else %}false{% endif %}
+              }"
+            >
+              {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+              {{ form.name.as_hidden }}
+              {{ form.catalog_price_usd.as_hidden }}
+
+              <label class="flex cursor-pointer items-center gap-3 px-4 py-3">
+                <input
+                  type="checkbox"
+                  name="{{ form.selected.html_name }}"
+                  id="{{ form.selected.id_for_label }}"
+                  class="h-4 w-4 rounded border-0 text-brand shadow-neo-inset transition-all duration-300 ease-in-out focus:ring-2 focus:ring-brand"
+                  x-model="selected"
+                  {% if form.selected.value %}checked{% endif %}
+                >
+                <span class="flex-1 font-medium text-ink">{{ form.initial.name|default:form.name.value }}</span>
+                <span class="text-sm font-medium text-brand">
+                  USD {{ form.initial.catalog_price_usd|default:form.catalog_price_usd.value }}
+                </span>
+              </label>
+
+              <div
+                class="space-y-4 border-t border-shadow-dark/30 px-4 py-4"
+                x-show="selected"
+                x-cloak
+                x-transition:enter="transition ease-in-out duration-300"
+                x-transition:enter-start="opacity-0 scale-95"
+                x-transition:enter-end="opacity-100 scale-100"
+              >
+                <div class="grid gap-3 sm:grid-cols-3">
+                  <div>
+                    <label class="mb-1.5 block text-sm font-medium text-ink" for="{{ form.quantity.id_for_label }}">Cantidad</label>
+                    {{ form.quantity }}
+                    {% if form.quantity.errors %}<p class="mt-1 text-xs text-error">{{ form.quantity.errors.0 }}</p>{% endif %}
+                  </div>
+                  <div>
+                    <label class="mb-1.5 block text-sm font-medium text-ink" for="{{ form.unit_price_usd.id_for_label }}">Precio a cobrar USD</label>
+                    {{ form.unit_price_usd }}
+                    {% if form.unit_price_usd.errors %}<p class="mt-1 text-xs text-error">{{ form.unit_price_usd.errors.0 }}</p>{% endif %}
+                  </div>
+                  <div>
+                    <label class="mb-1.5 block text-sm font-medium text-ink" for="{{ form.cost_usd.id_for_label }}">Costo interno USD</label>
+                    {{ form.cost_usd }}
+                    {% if form.cost_usd.errors %}<p class="mt-1 text-xs text-error">{{ form.cost_usd.errors.0 }}</p>{% endif %}
+                  </div>
+                </div>
+
+                {% if quote_kind == "services" %}
+                  <div class="rounded-2xl bg-surface px-4 py-3 shadow-neo-inset">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <h3 class="text-sm font-semibold text-ink">Suministros embebidos</h3>
+                        <p class="text-xs text-muted">Sin precio al cliente; solo costo interno. Visibles en presupuesto, ocultos en factura.</p>
+                      </div>
+                      <button
+                        type="button"
+                        class="rounded-full px-3 py-1.5 text-xs font-medium text-ink shadow-neo-sm transition-all duration-300 ease-in-out hover:text-brand active:shadow-neo-inset"
+                        @click="showEmbeds = !showEmbeds"
+                        x-text="showEmbeds ? 'Ocultar' : 'Elegir del catálogo'"
+                      ></button>
+                    </div>
+
+                    <div class="mt-3 space-y-2" x-show="showEmbeds" x-cloak>
+                      {% for row in form.embed_rows %}
+                        <div
+                          class="rounded-2xl bg-surface px-3 py-2 shadow-neo-sm"
+                          x-data="{ on: {% if row.selected %}true{% else %}false{% endif %} }"
+                        >
+                          <label class="flex cursor-pointer items-center gap-2 text-sm text-ink">
+                            <input
+                              type="checkbox"
+                              name="lines-{{ forloop.parentloop.counter0 }}-emb-{{ row.supply.pk }}-include"
+                              value="1"
+                              class="h-4 w-4 rounded border-0 text-brand shadow-neo-inset focus:ring-2 focus:ring-brand"
+                              x-model="on"
+                              {% if row.selected %}checked{% endif %}
+                            >
+                            <span class="font-medium">{{ row.supply.name }}</span>
+                            {% if row.supply.unit %}<span class="text-xs text-muted">({{ row.supply.unit }})</span>{% endif %}
+                          </label>
+                          <div class="mt-2 grid gap-2 sm:grid-cols-2" x-show="on" x-cloak>
+                            <div>
+                              <label class="mb-1 block text-xs text-muted">Cantidad</label>
+                              <input
+                                type="number"
+                                step="0.001"
+                                min="0.001"
+                                name="lines-{{ forloop.parentloop.counter0 }}-emb-{{ row.supply.pk }}-quantity"
+                                value="{{ row.quantity }}"
+                                class="w-full rounded-2xl border-0 bg-surface px-3 py-2 text-sm text-ink shadow-neo-inset outline-none focus:ring-2 focus:ring-brand"
+                              >
+                            </div>
+                            <div>
+                              <label class="mb-1 block text-xs text-muted">Costo interno USD</label>
+                              <input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                name="lines-{{ forloop.parentloop.counter0 }}-emb-{{ row.supply.pk }}-cost"
+                                value="{{ row.cost_usd }}"
+                                class="w-full rounded-2xl border-0 bg-surface px-3 py-2 text-sm text-ink shadow-neo-inset outline-none focus:ring-2 focus:ring-brand"
+                              >
+                            </div>
+                          </div>
+                        </div>
+                      {% empty %}
+                        <p class="text-xs text-muted">No hay suministros activos en el catálogo.</p>
+                      {% endfor %}
+                    </div>
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="text-sm text-muted">No hay ítems activos en el catálogo. Cree {{ kind_label|lower }} primero.</p>
+      {% endif %}
+    </div>
+
+    {% include "components/btn_primary.html" with label="Generar presupuesto" type="submit" %}
+  </form>
+</section>

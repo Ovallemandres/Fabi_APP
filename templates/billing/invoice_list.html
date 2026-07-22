@@ -1,6 +1,14 @@
 {% extends "base.html" %}
 {% block title %}Facturas — {{ block.super }}{% endblock %}
 {% block content %}
-  <h1>Facturas</h1>
+  {% url 'billing:index' as billing_hub %}
+  {% include "components/page_header.html" with title="Facturas" subtitle=status_label back_href=billing_hub back_label="← Facturación" %}
+
+  <div class="mb-4 flex flex-wrap gap-2">
+    <a href="{% url 'billing:invoice_list' %}" class="rounded-full px-3 py-1.5 text-sm transition-all duration-300 ease-in-out {% if not status_filter %}font-semibold text-brand shadow-neo-inset{% else %}text-ink shadow-neo-sm{% endif %}">Todas</a>
+    <a href="{% url 'billing:invoice_list' %}?status=borrador" class="rounded-full px-3 py-1.5 text-sm transition-all duration-300 ease-in-out {% if status_filter == 'borrador' %}font-semibold text-brand shadow-neo-inset{% else %}text-ink shadow-neo-sm{% endif %}">Borrador</a>
+    <a href="{% url 'billing:invoice_list' %}?status=emitida" class="rounded-full px-3 py-1.5 text-sm transition-all duration-300 ease-in-out {% if status_filter == 'emitida' %}font-semibold text-brand shadow-neo-inset{% else %}text-ink shadow-neo-sm{% endif %}">Emitidas</a>
+    <a href="{% url 'billing:invoice_list' %}?status=anulada" class="rounded-full px-3 py-1.5 text-sm transition-all duration-300 ease-in-out {% if status_filter == 'anulada' %}font-semibold text-brand shadow-neo-inset{% else %}text-ink shadow-neo-sm{% endif %}">Anuladas</a>
+  </div>
   {% include "billing/partials/invoice_table.html" %}
 {% endblock %}

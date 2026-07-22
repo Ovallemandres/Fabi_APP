@@ -1,26 +1,37 @@
-<table>
-  <thead>
-    <tr>
-      <th>Placa</th>
-      <th>Marca / Modelo</th>
-      <th>Tipo</th>
-      <th>Propietario</th>
-      <th>Conductor</th>
-      <th></th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for truck in trucks %}
-      <tr>
-        <td><a href="{% url 'fleet:truck_detail' truck.pk %}">{{ truck.plate }}</a></td>
-        <td>{{ truck.brand }} {{ truck.model }}</td>
-        <td>{{ truck.get_truck_type_display }}</td>
-        <td>{{ truck.owner.legal_name }}</td>
-        <td>{% if truck.driver %}{{ truck.driver.full_name }}{% else %}—{% endif %}</td>
-        <td><a href="{% url 'fleet:truck_update' truck.pk %}">Editar</a></td>
-      </tr>
-    {% empty %}
-      <tr><td colspan="6">Sin camiones.</td></tr>
-    {% endfor %}
-  </tbody>
-</table>
+{% if trucks %}
+  <div class="overflow-x-auto rounded-2xl bg-surface p-4 shadow-neo">
+    <table class="w-full text-left text-sm">
+      <thead>
+        <tr class="text-muted">
+          <th class="px-2 py-2 font-medium">Placa</th>
+          <th class="px-2 py-2 font-medium">Marca / Modelo</th>
+          <th class="px-2 py-2 font-medium">Tipo</th>
+          <th class="px-2 py-2 font-medium">Propietario</th>
+          <th class="px-2 py-2 font-medium">Conductor</th>
+          <th class="px-2 py-2 font-medium"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for truck in trucks %}
+          <tr class="text-ink transition-all duration-300 ease-in-out hover:bg-shadow-dark/10">
+            <td class="px-2 py-3">
+              <a href="{% url 'fleet:truck_detail' truck.pk %}" class="font-medium text-brand transition-all duration-300 ease-in-out hover:opacity-80">
+                {{ truck.plate }}
+              </a>
+            </td>
+            <td class="px-2 py-3">{{ truck.brand }} {{ truck.model }}</td>
+            <td class="px-2 py-3 text-muted">{{ truck.get_truck_type_display }}</td>
+            <td class="px-2 py-3 text-muted">{{ truck.owner.legal_name }}</td>
+            <td class="px-2 py-3 text-muted">{% if truck.driver %}{{ truck.driver.full_name }}{% else %}—{% endif %}</td>
+            <td class="px-2 py-3 text-right">
+              <a href="{% url 'fleet:truck_update' truck.pk %}" class="text-sm text-muted transition-all duration-300 ease-in-out hover:text-brand">Editar</a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  {% url 'fleet:truck_create' as truck_create %}
+  {% include "components/empty_state.html" with message="Sin camiones." action_href=truck_create action_label="Crear camión" %}
+{% endif %}

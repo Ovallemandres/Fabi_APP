@@ -1,10 +1,15 @@
-<section>
-  <h1>{{ title }}</h1>
-  <form method="post"
-        {% if driver %}action="{% url 'fleet:driver_update' driver.pk %}"{% else %}action="{% url 'fleet:driver_create' %}"{% endif %}>
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Guardar</button>
-    <a href="{% url 'fleet:driver_list' %}">Cancelar</a>
-  </form>
+<section class="mx-auto max-w-xl space-y-6">
+  {% url 'fleet:driver_list' as driver_list %}
+  {% include "components/page_header.html" with title=title back_href=driver_list back_label="← Conductores" %}
+
+  <div class="rounded-2xl bg-surface px-5 py-5 shadow-neo">
+    <form
+      method="post"
+      {% if driver %}action="{% url 'fleet:driver_update' driver.pk %}"{% else %}action="{% url 'fleet:driver_create' %}"{% endif %}
+    >
+      {% csrf_token %}
+      {% include "components/form_fields.html" %}
+      {% include "components/form_actions.html" with cancel_href=driver_list %}
+    </form>
+  </div>
 </section>

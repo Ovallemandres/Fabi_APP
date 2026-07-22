@@ -1,7 +1,12 @@
-<section>
-  <h1>Datos del emisor</h1>
-  <form method="post" action="{% url 'core:company_settings' %}">
-    {% csrf_token %}{{ form.as_p }}
-    <button type="submit">Guardar</button>
-  </form>
+<section class="mx-auto max-w-xl space-y-6">
+  {% url 'core:settings_hub' as settings_hub %}
+  {% include "components/page_header.html" with title="Datos del emisor" subtitle="Información fiscal de la empresa." back_href=settings_hub back_label="← Configuración" %}
+
+  <div class="rounded-2xl bg-surface px-5 py-5 shadow-neo">
+    <form method="post" action="{% url 'core:company_settings' %}">
+      {% csrf_token %}
+      {% include "components/form_fields.html" %}
+      {% include "components/form_actions.html" with submit_label="Guardar" cancel_href=settings_hub %}
+    </form>
+  </div>
 </section>

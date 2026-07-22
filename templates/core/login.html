@@ -1,14 +1,15 @@
 {% extends "base.html" %}
-{% block title %}Iniciar sesión — {{ block.super }}{% endblock %}
+{% block title %}Iniciar sesión — Fabi{% endblock %}
+{% block navigation %}{% endblock %}
 {% block content %}
-<section>
-  <h1>Iniciar sesión</h1>
-  <p>Acceso de administrador (staff).</p>
-  <form method="post" action="{% url 'core:login' %}">
+<section class="mx-auto mt-16 max-w-md rounded-2xl bg-surface px-6 py-8 shadow-neo-modal transition-all duration-300 ease-in-out">
+  <h1 class="mb-2 text-2xl font-bold text-ink">Iniciar sesión</h1>
+  <p class="mb-6 text-sm text-muted">Acceso de administrador (staff).</p>
+  <form method="post" action="{% url 'core:login' %}" class="space-y-4">
     {% csrf_token %}
-    {{ form.as_p }}
+    {% include "components/form_fields.html" %}
     {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
-    <button type="submit">Entrar</button>
+    {% include "components/btn_primary.html" with label="Entrar" type="submit" full="1" %}
   </form>
 </section>
 {% endblock %}

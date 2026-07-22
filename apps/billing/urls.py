@@ -10,6 +10,11 @@ urlpatterns = [
     path("", views.index, name="index"),
     path("quotes/", views.quote_list, name="quote_list"),
     path("quotes/new/", views.quote_create, name="quote_create"),
+    path(
+        "quotes/from-truck/<int:truck_id>/<str:kind>/",
+        views.quote_wizard,
+        name="quote_wizard",
+    ),
     path("quotes/<int:pk>/", views.quote_detail, name="quote_detail"),
     path(
         "quotes/<int:pk>/lines/service/",
@@ -21,6 +26,8 @@ urlpatterns = [
         views.quote_add_supply_line,
         name="quote_add_supply_line",
     ),
+    path("quotes/<int:pk>/send/", views.quote_mark_enviado, name="quote_mark_enviado"),
+    path("quotes/<int:pk>/accept/", views.quote_mark_aceptado, name="quote_mark_aceptado"),
     path("quotes/<int:pk>/convert/", views.quote_convert, name="quote_convert"),
     path("quotes/<int:pk>/pdf/", views.quote_enqueue_pdf, name="quote_enqueue_pdf"),
     path("invoices/", views.invoice_list, name="invoice_list"),

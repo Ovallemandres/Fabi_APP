@@ -36,9 +36,19 @@ def index(request: HttpRequest) -> HttpResponse:
     """Fleet hub: entry point to owners, drivers and trucks.
 
     Context:
-        - section: str — active section key (\"hub\")
+        - section: str
+        - owners_url, trucks_url, drivers_url: str
+        - owners_meta, trucks_meta, drivers_meta: str
     """
-    context: dict[str, str] = {"section": "hub"}
+    context = {
+        "section": "hub",
+        "owners_url": reverse("fleet:owner_list"),
+        "trucks_url": reverse("fleet:truck_list"),
+        "drivers_url": reverse("fleet:driver_list"),
+        "owners_meta": f"{Owner.objects.count()} registrados",
+        "trucks_meta": f"{Truck.objects.count()} unidades",
+        "drivers_meta": f"{Driver.objects.count()} conductores",
+    }
     template = "fleet/partials/hub.html" if _is_htmx(request) else "fleet/hub.html"
     return render(request, template, context)
 

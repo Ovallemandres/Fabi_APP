@@ -1,18 +1,40 @@
-<table>
-  <thead><tr><th>Código</th><th>Nombre</th><th>%</th><th>Base</th><th>Aplica</th><th>Activo</th><th></th></tr></thead>
-  <tbody>
-    {% for rule in rules %}
-      <tr>
-        <td>{{ rule.code }}</td>
-        <td>{{ rule.name }}</td>
-        <td>{{ rule.percentage }}</td>
-        <td>{{ rule.get_base_display }}</td>
-        <td>{{ rule.get_applies_to_display }}</td>
-        <td>{{ rule.is_active }}</td>
-        <td><a href="{% url 'core:fiscal_rule_update' rule.pk %}">Editar</a></td>
-      </tr>
-    {% empty %}
-      <tr><td colspan="7">Sin reglas.</td></tr>
-    {% endfor %}
-  </tbody>
-</table>
+{% if rules %}
+  <div class="overflow-x-auto rounded-2xl bg-surface p-4 shadow-neo">
+    <table class="w-full text-left text-sm">
+      <thead>
+        <tr class="text-muted">
+          <th class="px-2 py-2 font-medium">Código</th>
+          <th class="px-2 py-2 font-medium">Nombre</th>
+          <th class="px-2 py-2 font-medium">%</th>
+          <th class="px-2 py-2 font-medium">Base</th>
+          <th class="px-2 py-2 font-medium">Aplica</th>
+          <th class="px-2 py-2 font-medium">Activo</th>
+          <th class="px-2 py-2 font-medium"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for rule in rules %}
+          <tr class="text-ink transition-all duration-300 ease-in-out hover:bg-shadow-dark/10">
+            <td class="px-2 py-3 font-medium">{{ rule.code }}</td>
+            <td class="px-2 py-3">{{ rule.name }}</td>
+            <td class="px-2 py-3 text-muted">{{ rule.percentage }}</td>
+            <td class="px-2 py-3 text-muted">{{ rule.get_base_display }}</td>
+            <td class="px-2 py-3 text-muted">{{ rule.get_applies_to_display }}</td>
+            <td class="px-2 py-3">
+              {% if rule.is_active %}
+                {% include "components/badge.html" with label="Sí" %}
+              {% else %}
+                <span class="inline-flex rounded-full bg-disabled px-3 py-0.5 text-xs font-medium text-surface shadow-neo-sm">No</span>
+              {% endif %}
+            </td>
+            <td class="px-2 py-3 text-right">
+              <a href="{% url 'core:fiscal_rule_update' rule.pk %}" class="text-sm text-muted transition-all duration-300 ease-in-out hover:text-brand">Editar</a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  {% include "components/empty_state.html" with message="Sin reglas." %}
+{% endif %}

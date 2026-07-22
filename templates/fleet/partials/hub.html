@@ -1,8 +1,11 @@
-<nav aria-label="Flota">
-  <h1>Gestión de flota</h1>
-  <ul>
-    <li><a href="{% url 'fleet:truck_list' %}">Camiones</a></li>
-    <li><a href="{% url 'fleet:owner_list' %}">Propietarios</a></li>
-    <li><a href="{% url 'fleet:driver_list' %}">Conductores</a></li>
-  </ul>
-</nav>
+<section class="space-y-6">
+  <div>
+    <h1 class="text-3xl font-bold text-ink">Gestión de flota</h1>
+    <p class="mt-1 text-muted">Propietarios fiscales, unidades y conductores.</p>
+  </div>
+  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    {% include "components/section_card.html" with href=owners_url title="Propietarios" description="Clientes fiscales (RIF, razón social, dirección)." meta=owners_meta %}
+    {% include "components/section_card.html" with href=trucks_url title="Camiones" description="Unidades de la flota vinculadas a un propietario." meta=trucks_meta %}
+    {% include "components/section_card.html" with href=drivers_url title="Conductores" description="Responsables operativos asociados a camiones." meta=drivers_meta %}
+  </div>
+</section>

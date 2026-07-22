@@ -1,0 +1,9 @@
+<div class="rounded-2xl bg-surface px-6 py-10 text-center shadow-neo">
+  <p class="text-sm text-muted">{{ message|default:"Sin resultados." }}</p>
+  {% if action_href and action_label %}
+    <a
+      href="{{ action_href }}"
+      class="mt-4 inline-block rounded-full bg-brand px-4 py-2 text-sm font-medium text-surface shadow-neo-sm transition-all duration-300 ease-in-out hover:opacity-90 active:shadow-neo-pressed"
+    >{{ action_label }}</a>
+  {% endif %}
+</div>

@@ -1,8 +1,12 @@
-<section>
-  <h1>{{ title }}</h1>
-  <form method="post" action="{% url 'billing:quote_create' %}">
-    {% csrf_token %}{{ form.as_p }}
-    <button type="submit">Crear</button>
-    <a href="{% url 'billing:quote_list' %}">Cancelar</a>
-  </form>
+<section class="mx-auto max-w-xl space-y-6">
+  {% url 'billing:quote_list' as quote_list %}
+  {% include "components/page_header.html" with title=title back_href=quote_list back_label="← Presupuestos" %}
+
+  <div class="rounded-2xl bg-surface px-5 py-5 shadow-neo">
+    <form method="post" action="{% url 'billing:quote_create' %}">
+      {% csrf_token %}
+      {% include "components/form_fields.html" %}
+      {% include "components/form_actions.html" with submit_label="Crear" cancel_href=quote_list %}
+    </form>
+  </div>
 </section>

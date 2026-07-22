@@ -1,21 +1,48 @@
-<table>
-  <thead><tr><th>Nombre</th><th>Estado</th><th></th></tr></thead>
-  <tbody>
-    {% for service in services %}
-      <tr>
-        <td>{{ service.name }}</td>
-        <td>{% if service.is_active %}Activo{% else %}Inactivo{% endif %}</td>
-        <td>
-          <a href="{% url 'catalog:service_update' service.pk %}">Editar</a>
-          {% if service.is_active %}
-            <form method="post" action="{% url 'catalog:service_deactivate' service.pk %}">{% csrf_token %}<button type="submit">Desactivar</button></form>
-          {% else %}
-            <form method="post" action="{% url 'catalog:service_activate' service.pk %}">{% csrf_token %}<button type="submit">Reactivar</button></form>
-          {% endif %}
-        </td>
-      </tr>
-    {% empty %}
-      <tr><td colspan="3">Sin servicios.</td></tr>
-    {% endfor %}
-  </tbody>
-</table>
+{% if services %}
+  <div class="overflow-x-auto rounded-2xl bg-surface p-4 shadow-neo">
+    <table class="w-full text-left text-sm">
+      <thead>
+        <tr class="text-muted">
+          <th class="px-2 py-2 font-medium">Nombre</th>
+          <th class="px-2 py-2 font-medium">Precio ref. USD</th>
+          <th class="px-2 py-2 font-medium">Estado</th>
+          <th class="px-2 py-2 font-medium"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for service in services %}
+          <tr class="text-ink transition-all duration-300 ease-in-out hover:bg-shadow-dark/10">
+            <td class="px-2 py-3 font-medium">{{ service.name }}</td>
+            <td class="px-2 py-3 text-muted">{{ service.default_unit_price_usd }}</td>
+            <td class="px-2 py-3">
+              {% if service.is_active %}
+                {% include "components/badge.html" with label="Activo" %}
+              {% else %}
+                <span class="inline-flex rounded-full bg-disabled px-3 py-0.5 text-xs font-medium text-surface shadow-neo-sm">Inactivo</span>
+              {% endif %}
+            </td>
+            <td class="px-2 py-3">
+              <div class="flex flex-wrap items-center justify-end gap-2">
+                <a href="{% url 'catalog:service_update' service.pk %}" class="text-sm text-muted transition-all duration-300 ease-in-out hover:text-brand">Editar</a>
+                {% if service.is_active %}
+                  <form method="post" action="{% url 'catalog:service_deactivate' service.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="text-sm text-error transition-all duration-300 ease-in-out hover:opacity-80">Desactivar</button>
+                  </form>
+                {% else %}
+                  <form method="post" action="{% url 'catalog:service_activate' service.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="text-sm text-brand transition-all duration-300 ease-in-out hover:opacity-80">Reactivar</button>
+                  </form>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  {% url 'catalog:service_create' as service_create %}
+  {% include "components/empty_state.html" with message="Sin servicios." action_href=service_create action_label="Crear servicio" %}
+{% endif %}

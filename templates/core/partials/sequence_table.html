@@ -1,17 +1,32 @@
-<table>
-  <thead><tr><th>Tipo</th><th>Año</th><th>Prefijo</th><th>Padding</th><th>Siguiente</th><th></th></tr></thead>
-  <tbody>
-    {% for sequence in sequences %}
-      <tr>
-        <td>{{ sequence.get_document_kind_display }}</td>
-        <td>{{ sequence.year }}</td>
-        <td>{{ sequence.prefix }}</td>
-        <td>{{ sequence.padding }}</td>
-        <td>{{ sequence.next_number }}</td>
-        <td><a href="{% url 'core:sequence_update' sequence.pk %}">Editar</a></td>
-      </tr>
-    {% empty %}
-      <tr><td colspan="6">Aún no hay secuencias (se crean al emitir el primer documento).</td></tr>
-    {% endfor %}
-  </tbody>
-</table>
+{% if sequences %}
+  <div class="overflow-x-auto rounded-2xl bg-surface p-4 shadow-neo">
+    <table class="w-full text-left text-sm">
+      <thead>
+        <tr class="text-muted">
+          <th class="px-2 py-2 font-medium">Tipo</th>
+          <th class="px-2 py-2 font-medium">Año</th>
+          <th class="px-2 py-2 font-medium">Prefijo</th>
+          <th class="px-2 py-2 font-medium">Padding</th>
+          <th class="px-2 py-2 font-medium">Siguiente</th>
+          <th class="px-2 py-2 font-medium"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for sequence in sequences %}
+          <tr class="text-ink transition-all duration-300 ease-in-out hover:bg-shadow-dark/10">
+            <td class="px-2 py-3 font-medium">{{ sequence.get_document_kind_display }}</td>
+            <td class="px-2 py-3 text-muted">{{ sequence.year }}</td>
+            <td class="px-2 py-3 text-muted">{{ sequence.prefix }}</td>
+            <td class="px-2 py-3 text-muted">{{ sequence.padding }}</td>
+            <td class="px-2 py-3 text-muted">{{ sequence.next_number }}</td>
+            <td class="px-2 py-3 text-right">
+              <a href="{% url 'core:sequence_update' sequence.pk %}" class="text-sm text-muted transition-all duration-300 ease-in-out hover:text-brand">Editar</a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  {% include "components/empty_state.html" with message="Aún no hay secuencias (se crean al emitir el primer documento)." %}
+{% endif %}

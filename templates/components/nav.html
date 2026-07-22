@@ -1,0 +1,73 @@
+{% if user.is_authenticated %}
+<header class="mb-8">
+  <div
+    class="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-surface px-5 py-4 shadow-neo transition-all duration-300 ease-in-out"
+    x-data="{ open: false }"
+  >
+    <div class="flex items-center gap-4">
+      <a
+        href="{% url 'core:home' %}"
+        class="text-xl font-bold tracking-tight text-ink transition-all duration-300 ease-in-out hover:text-brand"
+      >
+        Fabi
+      </a>
+      <button
+        type="button"
+        class="rounded-full px-3 py-2 text-sm text-muted shadow-neo-sm transition-all duration-300 ease-in-out active:shadow-neo-inset md:hidden"
+        @click="open = !open"
+        :aria-expanded="open.toString()"
+        aria-controls="main-nav"
+      >
+        Menú
+      </button>
+    </div>
+
+    <nav
+      id="main-nav"
+      class="w-full md:w-auto"
+      :class="open ? 'block' : 'hidden md:block'"
+      aria-label="Secciones principales"
+    >
+      <ul class="flex flex-col gap-2 md:flex-row md:items-center md:gap-2">
+        <li>
+          <a
+            href="{% url 'fleet:index' %}"
+            class="block rounded-full px-4 py-2 text-sm font-medium transition-all duration-300 ease-in-out hover:text-brand {% if request.resolver_match.app_name == 'fleet' %}bg-surface font-semibold text-brand shadow-neo-inset{% else %}text-ink shadow-neo-sm{% endif %}"
+          >Flota</a>
+        </li>
+        <li>
+          <a
+            href="{% url 'catalog:index' %}"
+            class="block rounded-full px-4 py-2 text-sm font-medium transition-all duration-300 ease-in-out hover:text-brand {% if request.resolver_match.app_name == 'catalog' %}bg-surface font-semibold text-brand shadow-neo-inset{% else %}text-ink shadow-neo-sm{% endif %}"
+          >Catálogo</a>
+        </li>
+        <li>
+          <a
+            href="{% url 'billing:index' %}"
+            class="block rounded-full px-4 py-2 text-sm font-medium transition-all duration-300 ease-in-out hover:text-brand {% if request.resolver_match.app_name == 'billing' %}bg-surface font-semibold text-brand shadow-neo-inset{% else %}text-ink shadow-neo-sm{% endif %}"
+          >Facturación</a>
+        </li>
+        <li>
+          <a
+            href="{% url 'core:settings_hub' %}"
+            class="block rounded-full px-4 py-2 text-sm font-medium transition-all duration-300 ease-in-out hover:text-brand {% if request.resolver_match.app_name == 'core' and request.resolver_match.url_name != 'home' and request.resolver_match.url_name != 'login' %}bg-surface font-semibold text-brand shadow-neo-inset{% else %}text-ink shadow-neo-sm{% endif %}"
+          >Configuración</a>
+        </li>
+      </ul>
+    </nav>
+
+    <div class="ml-auto flex items-center gap-3">
+      <span class="hidden text-sm text-muted sm:inline">{{ user.username }}</span>
+      <form method="post" action="{% url 'core:logout' %}">
+        {% csrf_token %}
+        <button
+          type="submit"
+          class="rounded-full bg-brand px-4 py-2 text-sm font-medium text-surface shadow-neo-sm transition-all duration-300 ease-in-out hover:opacity-90 active:shadow-neo-pressed"
+        >
+          Salir
+        </button>
+      </form>
+    </div>
+  </div>
+</header>
+{% endif %}

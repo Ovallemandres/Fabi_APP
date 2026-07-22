@@ -4,9 +4,62 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Fabi{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            surface: "#F2EBE0",
+            brand: "#DC2F23",
+            ink: "#202020",
+            muted: "#606060",
+            error: "#B02A2A",
+            "shadow-light": "#FFFFFF",
+            "shadow-dark": "#D4CBB8",
+            disabled: "#C8C2B8",
+          },
+          boxShadow: {
+            neo: "6px 6px 12px #D4CBB8, -6px -6px 12px #FFFFFF",
+            "neo-sm": "4px 4px 8px #D4CBB8, -4px -4px 8px #FFFFFF",
+            "neo-hover": "8px 8px 16px #D4CBB8, -8px -8px 16px #FFFFFF",
+            "neo-inset": "inset 3px 3px 6px #D4CBB8, inset -3px -3px 6px #FFFFFF",
+            "neo-pressed": "inset 3px 3px 6px rgba(0,0,0,0.2), inset -2px -2px 4px rgba(255,255,255,0.2)",
+            "neo-modal": "10px 10px 24px #D4CBB8, -10px -10px 24px #FFFFFF",
+          },
+        },
+      },
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
+  <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+  <style>
+    .htmx-indicator { display: none; }
+    .htmx-request .htmx-indicator { display: block; }
+    .htmx-request.htmx-indicator { display: block; }
+    [x-cloak] { display: none !important; }
+  </style>
   {% block extra_head %}{% endblock %}
 </head>
-<body>
-  {% block content %}{% endblock %}
+<body class="min-h-screen bg-surface text-ink antialiased">
+  <div class="mx-auto max-w-6xl px-4 py-6 sm:px-6">
+    {% block navigation %}
+      {% include "components/nav.html" %}
+    {% endblock %}
+
+    {% if messages %}
+      <ul class="mb-6 space-y-2" aria-live="polite">
+        {% for message in messages %}
+          <li class="rounded-2xl bg-surface px-4 py-3 text-sm shadow-neo-inset transition-all duration-300 ease-in-out {% if 'error' in message.tags %}text-error{% else %}text-ink{% endif %}">
+            {{ message }}
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    <main>
+      {% block content %}{% endblock %}
+    </main>
+  </div>
 </body>
 </html>

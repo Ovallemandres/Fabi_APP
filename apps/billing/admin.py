@@ -12,8 +12,16 @@ class QuoteLineInline(admin.TabularInline):
 
 @admin.register(Quote)
 class QuoteAdmin(admin.ModelAdmin):
-    list_display = ("number", "truck", "status", "exchange_rate", "total_usd", "updated_at")
-    list_filter = ("status",)
+    list_display = (
+        "number",
+        "quote_kind",
+        "truck",
+        "status",
+        "exchange_rate",
+        "total_usd",
+        "updated_at",
+    )
+    list_filter = ("status", "quote_kind")
     search_fields = ("number", "truck__plate")
     inlines = [QuoteLineInline]
 

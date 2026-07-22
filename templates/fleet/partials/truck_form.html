@@ -1,10 +1,20 @@
-<section>
-  <h1>{{ title }}</h1>
-  <form method="post"
-        {% if truck %}action="{% url 'fleet:truck_update' truck.pk %}"{% else %}action="{% url 'fleet:truck_create' %}"{% endif %}>
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Guardar</button>
-    <a href="{% if truck %}{% url 'fleet:truck_detail' truck.pk %}{% else %}{% url 'fleet:truck_list' %}{% endif %}">Cancelar</a>
-  </form>
+<section class="mx-auto max-w-xl space-y-6">
+  {% url 'fleet:truck_list' as truck_list %}
+  {% if truck %}
+    {% url 'fleet:truck_detail' truck.pk as cancel_url %}
+  {% else %}
+    {% url 'fleet:truck_list' as cancel_url %}
+  {% endif %}
+  {% include "components/page_header.html" with title=title back_href=truck_list back_label="← Camiones" %}
+
+  <div class="rounded-2xl bg-surface px-5 py-5 shadow-neo">
+    <form
+      method="post"
+      {% if truck %}action="{% url 'fleet:truck_update' truck.pk %}"{% else %}action="{% url 'fleet:truck_create' %}"{% endif %}
+    >
+      {% csrf_token %}
+      {% include "components/form_fields.html" %}
+      {% include "components/form_actions.html" with cancel_href=cancel_url %}
+    </form>
+  </div>
 </section>

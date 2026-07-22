@@ -1,0 +1,13 @@
+{% comment %}Shared card styles for section hubs{% endcomment %}
+<a
+  href="{{ href }}"
+  class="block rounded-2xl bg-surface px-5 py-5 shadow-neo transition-all duration-300 ease-in-out hover:shadow-neo-hover"
+>
+  <h2 class="mb-1 text-lg font-semibold text-ink">{{ title }}</h2>
+  {% if description %}
+    <p class="text-sm text-muted">{{ description }}</p>
+  {% endif %}
+  {% if meta %}
+    <p class="mt-2 text-xs font-medium text-brand">{{ meta }}</p>
+  {% endif %}
+</a>

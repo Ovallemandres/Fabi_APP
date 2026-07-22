@@ -1,17 +1,36 @@
-<table>
-  <thead><tr><th>Número</th><th>Presupuesto</th><th>Estado</th><th>Total VES</th><th>A pagar</th><th></th></tr></thead>
-  <tbody>
-    {% for invoice in invoices %}
-      <tr>
-        <td><a href="{% url 'billing:invoice_detail' invoice.pk %}">{{ invoice.number }}</a></td>
-        <td>{{ invoice.quote.number }}</td>
-        <td>{{ invoice.get_status_display }}</td>
-        <td>{{ invoice.total_ves }}</td>
-        <td>{{ invoice.total_a_pagar_ves }}</td>
-        <td><a href="{% url 'billing:invoice_detail' invoice.pk %}">Ver</a></td>
-      </tr>
-    {% empty %}
-      <tr><td colspan="6">Sin facturas.</td></tr>
-    {% endfor %}
-  </tbody>
-</table>
+{% if invoices %}
+  <div class="overflow-x-auto rounded-2xl bg-surface p-4 shadow-neo">
+    <table class="w-full text-left text-sm">
+      <thead>
+        <tr class="text-muted">
+          <th class="px-2 py-2 font-medium">Número</th>
+          <th class="px-2 py-2 font-medium">Presupuesto</th>
+          <th class="px-2 py-2 font-medium">Estado</th>
+          <th class="px-2 py-2 font-medium">Total VES</th>
+          <th class="px-2 py-2 font-medium">A pagar</th>
+          <th class="px-2 py-2 font-medium"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for invoice in invoices %}
+          <tr class="text-ink transition-all duration-300 ease-in-out hover:bg-shadow-dark/10">
+            <td class="px-2 py-3">
+              <a href="{% url 'billing:invoice_detail' invoice.pk %}" class="font-medium text-brand transition-all duration-300 ease-in-out hover:opacity-80">
+                {{ invoice.number }}
+              </a>
+            </td>
+            <td class="px-2 py-3 text-muted">{{ invoice.quote.number }}</td>
+            <td class="px-2 py-3">{% include "components/badge.html" with label=invoice.get_status_display %}</td>
+            <td class="px-2 py-3 font-medium">{{ invoice.total_ves }}</td>
+            <td class="px-2 py-3 font-medium">{{ invoice.total_a_pagar_ves }}</td>
+            <td class="px-2 py-3 text-right">
+              <a href="{% url 'billing:invoice_detail' invoice.pk %}" class="text-sm text-muted transition-all duration-300 ease-in-out hover:text-brand">Ver</a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  {% include "components/empty_state.html" with message="Sin facturas." %}
+{% endif %}

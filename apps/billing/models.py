@@ -33,6 +33,13 @@ class LineType(models.TextChoices):
     EMBEDDED_SUPPLY = "embedded_supply", "Suministro embebido"
 
 
+class QuoteKind(models.TextChoices):
+    """MVP: presupuestos de servicios y de suministros se emiten por separado."""
+
+    SERVICES = "services", "Servicios"
+    SUPPLIES = "supplies", "Suministros"
+
+
 class Quote(models.Model):
     """Presupuesto en USD vinculado a un camión (1 quote → 1 invoice en MVP)."""
 
@@ -43,6 +50,13 @@ class Quote(models.Model):
         related_name="quotes",
         verbose_name="Camión",
     )
+    quote_kind = models.CharField(
+        "Tipo de presupuesto",
+        max_length=20,
+        choices=QuoteKind.choices,
+        default=QuoteKind.SERVICES,
+        db_index=True,
+    )
     status = models.CharField(
         max_length=40,
         choices=QuoteStatus.choices,
@@ -50,10 +64,11 @@ class Quote(models.Model):
         db_index=True,
     )
     exchange_rate = models.DecimalField(
-        "Tasa presupuesto",
+        "Tasa BCV presupuesto",
         max_digits=18,
         decimal_places=6,
         validators=[MinValueValidator(Decimal("0.000001"))],
+        help_text="Tasa de cambio del Banco Central (USD→VES) vigente para este presupuesto.",
     )
     subtotal_usd = models.DecimalField(
         max_digits=18, decimal_places=2, default=Decimal("0.00")
@@ -76,6 +91,10 @@ class Quote(models.Model):
 
     def __str__(self) -> str:
         return self.number
+
+    @property
+    def total_ves_equiv(self) -> Decimal:
+        return (self.total_usd * self.exchange_rate).quantize(Decimal("0.01"))
 
 
 class QuoteLine(models.Model):

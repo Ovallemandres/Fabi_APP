@@ -1,13 +1,33 @@
 {% extends "base.html" %}
 {% block title %}Suministros — {{ block.super }}{% endblock %}
 {% block content %}
-  <h1>Suministros</h1>
-  <p><a href="{% url 'catalog:supply_create' %}">Nuevo suministro</a></p>
-  <form method="get" action="{% url 'catalog:supply_list' %}"
-        hx-get="{% url 'catalog:supply_list' %}" hx-target="#supply-table"
-        hx-trigger="keyup changed delay:300ms from:input[name=q], change from:input[name=include_inactive], submit">
-    <label>Buscar <input type="search" name="q" value="{{ q }}"></label>
-    <label><input type="checkbox" name="include_inactive" value="1" {% if include_inactive %}checked{% endif %}> Incluir inactivos</label>
+  {% url 'catalog:index' as catalog_hub %}
+  {% url 'catalog:supply_create' as supply_create %}
+  {% include "components/page_header.html" with title="Suministros" subtitle="Autopartes y consumibles." back_href=catalog_hub back_label="← Catálogo" action_href=supply_create action_label="Nuevo suministro" %}
+
+  <form
+    method="get"
+    action="{% url 'catalog:supply_list' %}"
+    class="mb-4 space-y-3"
+    hx-get="{% url 'catalog:supply_list' %}"
+    hx-target="#supply-table"
+    hx-indicator="#supply-search-indicator"
+    hx-trigger="keyup changed delay:300ms from:input[name=q], change from:input[name=include_inactive], submit"
+  >
+    {% include "components/search_field.html" with value=q placeholder="Nombre del suministro…" indicator_id="supply-search-indicator" %}
+    <label class="flex items-center gap-3 text-sm text-ink">
+      <input
+        type="checkbox"
+        name="include_inactive"
+        value="1"
+        class="h-4 w-4 rounded border-0 text-brand shadow-neo-inset transition-all duration-300 ease-in-out focus:ring-2 focus:ring-brand"
+        {% if include_inactive %}checked{% endif %}
+      >
+      Incluir inactivos
+    </label>
   </form>
-  <div id="supply-table">{% include "catalog/partials/supply_table.html" %}</div>
+
+  <div id="supply-table">
+    {% include "catalog/partials/supply_table.html" %}
+  </div>
 {% endblock %}

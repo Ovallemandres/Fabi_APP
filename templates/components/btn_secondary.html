@@ -1,0 +1,14 @@
+{% if href %}
+<a
+  href="{{ href }}"
+  class="inline-block rounded-full px-4 py-2 text-sm font-medium text-ink shadow-neo-sm transition-all duration-300 ease-in-out hover:text-brand active:shadow-neo-inset"
+>{{ label }}</a>
+{% else %}
+<button
+  type="{{ type|default:'button' }}"
+  class="rounded-full px-4 py-2 text-sm font-medium text-ink shadow-neo-sm transition-all duration-300 ease-in-out hover:text-brand active:shadow-neo-inset"
+  {% if name %}name="{{ name }}"{% endif %}
+>
+  {{ label }}
+</button>
+{% endif %}

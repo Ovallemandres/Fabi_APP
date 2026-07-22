@@ -8,7 +8,7 @@ from typing import Any
 from django.db import transaction
 
 from apps.core.models import DocumentKind
-from apps.core.services import allocate_document_number, get_company_settings
+from apps.core.services import allocate_document_number
 
 from apps.billing.models import (
     Invoice,
@@ -16,6 +16,7 @@ from apps.billing.models import (
     InvoiceStatus,
     LineType,
     Quote,
+    QuoteKind,
     QuoteLine,
     QuoteStatus,
 )
@@ -23,17 +24,25 @@ from apps.billing.services.calculations import calculate_invoice_totals, calcula
 
 
 @transaction.atomic
-def create_quote(*, truck_id: int, exchange_rate: Decimal, notes: str = "") -> Quote:
-    """Create a numbered quote in borrador status."""
+def create_quote(
+    *,
+    truck_id: int,
+    exchange_rate: Decimal,
+    quote_kind: str,
+    notes: str = "",
+) -> Quote:
+    """Create a numbered quote in borrador status for services or supplies."""
+    if quote_kind not in {QuoteKind.SERVICES, QuoteKind.SUPPLIES}:
+        raise ValueError("Tipo de presupuesto inválido.")
     number = allocate_document_number(DocumentKind.QUOTE)
-    quote = Quote.objects.create(
+    return Quote.objects.create(
         number=number,
         truck_id=truck_id,
+        quote_kind=quote_kind,
         exchange_rate=exchange_rate,
         notes=notes,
         status=QuoteStatus.BORRADOR,
     )
-    return quote
 
 
 def refresh_quote_totals(quote: Quote) -> Quote:
@@ -47,6 +56,56 @@ def refresh_quote_totals(quote: Quote) -> Quote:
 
 
 @transaction.atomic
+def create_quote_with_lines(
+    *,
+    truck_id: int,
+    exchange_rate: Decimal,
+    quote_kind: str,
+    lines: list[dict[str, Any]],
+    notes: str = "",
+) -> Quote:
+    """Create quote and all billable lines in one step (wizard).
+
+    For ``services`` lines: service_id, description, quantity, cost_usd, unit_price_usd,
+    optional embeds list.
+    For ``supplies`` lines: supply_id, description, quantity, cost_usd, unit_price_usd.
+    """
+    if not lines:
+        raise ValueError("Debe agregar al menos un ítem al presupuesto.")
+
+    quote = create_quote(
+        truck_id=truck_id,
+        exchange_rate=exchange_rate,
+        quote_kind=quote_kind,
+        notes=notes,
+    )
+
+    if quote_kind == QuoteKind.SERVICES:
+        for raw in lines:
+            add_service_line_with_embeds(
+                quote,
+                service_id=raw.get("service_id"),
+                description=raw["description"],
+                quantity=Decimal(str(raw["quantity"])),
+                cost_usd=Decimal(str(raw["cost_usd"])),
+                unit_price_usd=Decimal(str(raw["unit_price_usd"])),
+                embeds=raw.get("embeds") or [],
+            )
+    else:
+        for raw in lines:
+            add_supply_line(
+                quote,
+                supply_id=raw.get("supply_id"),
+                description=raw["description"],
+                quantity=Decimal(str(raw["quantity"])),
+                cost_usd=Decimal(str(raw["cost_usd"])),
+                unit_price_usd=Decimal(str(raw["unit_price_usd"])),
+            )
+
+    return refresh_quote_totals(quote)
+
+
+@transaction.atomic
 def add_service_line_with_embeds(
     quote: Quote,
     *,
@@ -57,10 +116,9 @@ def add_service_line_with_embeds(
     unit_price_usd: Decimal,
     embeds: list[dict[str, Any]],
 ) -> QuoteLine:
-    """Add a service line and optional embedded supplies in one transaction.
-
-    Each embed dict: supply_id?, description, quantity, cost_usd.
-    """
+    """Add a service line and optional embedded supplies in one transaction."""
+    if quote.quote_kind != QuoteKind.SERVICES:
+        raise ValueError("Este presupuesto es solo de suministros.")
     parent = QuoteLine.objects.create(
         quote=quote,
         line_type=LineType.SERVICE,
@@ -100,6 +158,8 @@ def add_supply_line(
     unit_price_usd: Decimal,
 ) -> QuoteLine:
     """Add a standalone supply line (billable)."""
+    if quote.quote_kind != QuoteKind.SUPPLIES:
+        raise ValueError("Este presupuesto es solo de servicios.")
     line = QuoteLine.objects.create(
         quote=quote,
         line_type=LineType.SUPPLY,
@@ -116,14 +176,47 @@ def add_supply_line(
 
 
 @transaction.atomic
+def mark_quote_enviado(quote: Quote) -> Quote:
+    """Mark quote as sent to client."""
+    if quote.status not in {QuoteStatus.BORRADOR, QuoteStatus.CONFIRMAR_PRESUPUESTO_FACTURA_ANULADA}:
+        raise ValueError("Solo se puede enviar un presupuesto en borrador o pendiente de confirmación.")
+    if not quote.lines.filter(is_embedded=False).exists():
+        raise ValueError("El presupuesto no tiene líneas facturables.")
+    quote.status = QuoteStatus.ENVIADO
+    quote.save(update_fields=["status", "updated_at"])
+    return quote
+
+
+@transaction.atomic
+def mark_quote_aceptado(quote: Quote) -> Quote:
+    """Mark quote as accepted by client (ready to invoice)."""
+    if quote.status not in {
+        QuoteStatus.ENVIADO,
+        QuoteStatus.BORRADOR,
+        QuoteStatus.CONFIRMAR_PRESUPUESTO_FACTURA_ANULADA,
+    }:
+        raise ValueError("No se puede aceptar este presupuesto en su estado actual.")
+    quote.status = QuoteStatus.ACEPTADO
+    quote.save(update_fields=["status", "updated_at"])
+    return quote
+
+
+@transaction.atomic
 def convert_quote_to_invoice(quote: Quote, *, exchange_rate: Decimal) -> Invoice:
-    """Create invoice from quote (1:1), recalc VES with new rate, mark quote facturado."""
+    """Create invoice from quote (1:1), recalc VES with new BCV rate, mark quote facturado."""
     if hasattr(quote, "invoice"):
         raise ValueError("Este presupuesto ya tiene factura asociada.")
     if quote.status == QuoteStatus.ANULADO:
         raise ValueError("No se puede facturar un presupuesto anulado.")
     if quote.status == QuoteStatus.FACTURADO:
         raise ValueError("El presupuesto ya está facturado.")
+    if quote.status not in {
+        QuoteStatus.ACEPTADO,
+        QuoteStatus.ENVIADO,
+        QuoteStatus.BORRADOR,
+        QuoteStatus.CONFIRMAR_PRESUPUESTO_FACTURA_ANULADA,
+    }:
+        raise ValueError("Estado de presupuesto no válido para facturar.")
 
     number = allocate_document_number(DocumentKind.INVOICE)
     billable = [

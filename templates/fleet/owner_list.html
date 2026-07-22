@@ -1,14 +1,21 @@
 {% extends "base.html" %}
 {% block title %}Propietarios — {{ block.super }}{% endblock %}
 {% block content %}
-  <h1>Propietarios</h1>
-  <p><a href="{% url 'fleet:owner_create' %}">Nuevo propietario</a></p>
-  <form method="get" action="{% url 'fleet:owner_list' %}"
-        hx-get="{% url 'fleet:owner_list' %}"
-        hx-target="#owner-table"
-        hx-trigger="keyup changed delay:300ms from:input[name=q], submit">
-    <label>Buscar <input type="search" name="q" value="{{ q }}"></label>
+  {% url 'fleet:index' as fleet_hub %}
+  {% url 'fleet:owner_create' as owner_create %}
+  {% include "components/page_header.html" with title="Propietarios" subtitle="Clientes fiscales de la flota." back_href=fleet_hub back_label="← Flota" action_href=owner_create action_label="Nuevo propietario" %}
+
+  <form
+    method="get"
+    action="{% url 'fleet:owner_list' %}"
+    hx-get="{% url 'fleet:owner_list' %}"
+    hx-target="#owner-table"
+    hx-indicator="#owner-search-indicator"
+    hx-trigger="keyup changed delay:300ms from:input[name=q], submit"
+  >
+    {% include "components/search_field.html" with value=q placeholder="RIF o razón social…" indicator_id="owner-search-indicator" %}
   </form>
+
   <div id="owner-table">
     {% include "fleet/partials/owner_table.html" %}
   </div>

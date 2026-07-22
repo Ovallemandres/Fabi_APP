@@ -1,14 +1,21 @@
 {% extends "base.html" %}
 {% block title %}Conductores — {{ block.super }}{% endblock %}
 {% block content %}
-  <h1>Conductores</h1>
-  <p><a href="{% url 'fleet:driver_create' %}">Nuevo conductor</a></p>
-  <form method="get" action="{% url 'fleet:driver_list' %}"
-        hx-get="{% url 'fleet:driver_list' %}"
-        hx-target="#driver-table"
-        hx-trigger="keyup changed delay:300ms from:input[name=q], submit">
-    <label>Buscar <input type="search" name="q" value="{{ q }}"></label>
+  {% url 'fleet:index' as fleet_hub %}
+  {% url 'fleet:driver_create' as driver_create %}
+  {% include "components/page_header.html" with title="Conductores" subtitle="Responsables operativos." back_href=fleet_hub back_label="← Flota" action_href=driver_create action_label="Nuevo conductor" %}
+
+  <form
+    method="get"
+    action="{% url 'fleet:driver_list' %}"
+    hx-get="{% url 'fleet:driver_list' %}"
+    hx-target="#driver-table"
+    hx-indicator="#driver-search-indicator"
+    hx-trigger="keyup changed delay:300ms from:input[name=q], submit"
+  >
+    {% include "components/search_field.html" with value=q placeholder="Nombre o documento…" indicator_id="driver-search-indicator" %}
   </form>
+
   <div id="driver-table">
     {% include "fleet/partials/driver_table.html" %}
   </div>

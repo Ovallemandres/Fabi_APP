@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
-from django.db.models import Q, QuerySet
+from decimal import Decimal, InvalidOperation
 
-from .models import Service, Supply
+from django.db import transaction
+from django.db.models import Q, QuerySet
+from django.http import HttpRequest
+
+from .models import Service, ServiceDefaultEmbed, Supply
 
 
 def search_services(query: str = "", *, include_inactive: bool = False) -> QuerySet[Service]:
@@ -61,3 +65,55 @@ def activate_supply(supply: Supply) -> Supply:
     supply.is_active = True
     supply.save(update_fields=["is_active", "updated_at"])
     return supply
+
+
+@transaction.atomic
+def sync_service_default_embeds(service: Service, request: HttpRequest) -> None:
+    """Replace default embeds from POST checkboxes ``embed_supply_<id>``.
+
+    Optional companion fields: ``embed_qty_<id>``, ``embed_cost_<id>``.
+    """
+    selected_ids: list[int] = []
+    for key, value in request.POST.items():
+        if not key.startswith("embed_supply_"):
+            continue
+        if value in {"", "0", "false", "off"}:
+            continue
+        try:
+            selected_ids.append(int(key.removeprefix("embed_supply_")))
+        except ValueError:
+            continue
+
+    supplies = {
+        s.pk: s for s in Supply.objects.filter(pk__in=selected_ids, is_active=True)
+    }
+    ServiceDefaultEmbed.objects.filter(service=service).exclude(
+        supply_id__in=supplies.keys()
+    ).delete()
+
+    for supply_id, supply in supplies.items():
+        qty_raw = request.POST.get(f"embed_qty_{supply_id}", "1") or "1"
+        cost_raw = request.POST.get(f"embed_cost_{supply_id}", "") or str(
+            supply.default_cost_usd
+        )
+        try:
+            qty = Decimal(str(qty_raw))
+        except (InvalidOperation, TypeError):
+            qty = Decimal("1")
+        try:
+            cost = Decimal(str(cost_raw))
+        except (InvalidOperation, TypeError):
+            cost = supply.default_cost_usd
+        if qty <= 0:
+            qty = Decimal("1")
+        if cost < 0:
+            cost = Decimal("0")
+
+        ServiceDefaultEmbed.objects.update_or_create(
+            service=service,
+            supply=supply,
+            defaults={
+                "default_quantity": qty,
+                "default_cost_usd": cost,
+            },
+        )

@@ -4,10 +4,12 @@ from __future__ import annotations
 
 from django import forms
 
+from apps.core.form_styling import NeumorphicFormMixin
+
 from .models import Driver, Owner, Truck
 
 
-class OwnerForm(forms.ModelForm):
+class OwnerForm(NeumorphicFormMixin, forms.ModelForm):
     """Formulario de propietario (cliente fiscal)."""
 
     class Meta:
@@ -15,7 +17,7 @@ class OwnerForm(forms.ModelForm):
         fields = ("rif", "legal_name", "fiscal_address", "phone")
 
 
-class DriverForm(forms.ModelForm):
+class DriverForm(NeumorphicFormMixin, forms.ModelForm):
     """Formulario de conductor / responsable."""
 
     class Meta:
@@ -23,7 +25,7 @@ class DriverForm(forms.ModelForm):
         fields = ("full_name", "phone", "id_document")
 
 
-class TruckForm(forms.ModelForm):
+class TruckForm(NeumorphicFormMixin, forms.ModelForm):
     """Formulario de camión: vehículo + propietario + conductor opcional."""
 
     class Meta:
