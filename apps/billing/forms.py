@@ -10,7 +10,7 @@ from apps.catalog.models import Service, Supply
 from apps.core.form_styling import NeumorphicFormMixin
 from apps.fleet.models import Truck
 
-from .models import Quote
+from .models import Quote, QuoteFiscalRule
 
 
 class QuoteForm(NeumorphicFormMixin, forms.ModelForm):
@@ -153,3 +153,35 @@ class WizardSupplyLineForm(NeumorphicFormMixin, forms.Form):
 
 WizardServiceFormSet = forms.formset_factory(WizardServiceLineForm, extra=0)
 WizardSupplyFormSet = forms.formset_factory(WizardSupplyLineForm, extra=0)
+
+
+class QuoteIvaForm(NeumorphicFormMixin, forms.ModelForm):
+    class Meta:
+        model = Quote
+        fields = ("iva_pct",)
+        labels = {"iva_pct": "IVA del presupuesto (fracción, ej. 0.16)"}
+
+
+class QuoteFiscalRuleEditForm(NeumorphicFormMixin, forms.ModelForm):
+    class Meta:
+        model = QuoteFiscalRule
+        fields = ("percentage", "is_active")
+
+    def __init__(self, *args, **kwargs) -> None:  # type: ignore[no-untyped-def]
+        super().__init__(*args, **kwargs)
+        self.fields["is_active"].required = False
+        # Accept both 0.75 and locale 0,75 from the text input.
+        self.fields["percentage"].localize = False
+
+    def clean_percentage(self) -> Decimal:
+        raw = self.data.get(self.add_prefix("percentage"), self.cleaned_data.get("percentage"))
+        if isinstance(raw, Decimal):
+            return raw
+        text = str(raw or "").strip().replace(",", ".")
+        try:
+            value = Decimal(text)
+        except Exception as exc:
+            raise forms.ValidationError("Porcentaje inválido.") from exc
+        if value < 0 or value > 1:
+            raise forms.ValidationError("Use una fracción entre 0 y 1 (ej. 0.75).")
+        return value

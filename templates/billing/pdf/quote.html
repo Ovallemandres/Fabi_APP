@@ -13,15 +13,15 @@
     <tbody>
       {% for line in lines %}
         <tr>
-          <td>{% if line.is_embedded %}↳ {% endif %}{{ line.description }}</td>
+          <td>{{ line.description }}</td>
           <td>{{ line.quantity }}</td>
-          <td>{% if line.is_embedded %}—{% else %}{{ line.unit_price_usd }}{% endif %}</td>
+          <td>{{ line.unit_price_usd }}</td>
         </tr>
       {% endfor %}
     </tbody>
   </table>
   <p>Subtotal USD: {{ quote.subtotal_usd }}</p>
-  <p>IVA USD: {{ quote.iva_usd }}</p>
+  <p>IVA ({{ quote.iva_pct }}): {{ quote.iva_usd }}</p>
   <p>Total USD: {{ quote.total_usd }}</p>
 </body>
 </html>

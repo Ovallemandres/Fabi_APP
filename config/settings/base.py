@@ -122,3 +122,6 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TASK_ALWAYS_EAGER = False
 CELERY_TASK_TRACK_STARTED = True
+
+# When True (or broker down), PDF generation runs in-process instead of Celery.
+PDF_SYNC = env.bool("PDF_SYNC", default=False)

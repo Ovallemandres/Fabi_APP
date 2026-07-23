@@ -1,4 +1,5 @@
 {% if supplies %}
+  {% load catalog_extras %}
   <div class="overflow-x-auto rounded-2xl bg-surface p-4 shadow-neo">
     <table class="w-full text-left text-sm">
       <thead>
@@ -6,6 +7,7 @@
           <th class="px-2 py-2 font-medium">Nombre</th>
           <th class="px-2 py-2 font-medium">Unidad</th>
           <th class="px-2 py-2 font-medium">Precio ref. USD</th>
+          <th class="px-2 py-2 font-medium">Frescura</th>
           <th class="px-2 py-2 font-medium">Estado</th>
           <th class="px-2 py-2 font-medium"></th>
         </tr>
@@ -16,6 +18,9 @@
             <td class="px-2 py-3 font-medium">{{ supply.name }}</td>
             <td class="px-2 py-3 text-muted">{{ supply.unit }}</td>
             <td class="px-2 py-3 text-muted">{{ supply.default_unit_price_usd }}</td>
+            <td class="px-2 py-3">
+              {% price_freshness_badge dt=supply.price_updated_at freshness=supply.freshness %}
+            </td>
             <td class="px-2 py-3">
               {% if supply.is_active %}
                 {% include "components/badge.html" with label="Activo" %}

@@ -2,7 +2,7 @@
 {% block title %}Reglas fiscales — {{ block.super }}{% endblock %}
 {% block content %}
   {% url 'core:settings_hub' as settings_hub %}
-  {% include "components/page_header.html" with title="Reglas fiscales" subtitle="Retenciones configurables del motor fiscal." back_href=settings_hub back_label="← Configuración" %}
+  {% include "components/page_header.html" with title="Reglas fiscales (plantilla)" subtitle="Defaults que se copian a cada presupuesto nuevo. El emisor solo se edita en /admin/." back_href=settings_hub back_label="← Configuración" %}
 
   <form method="get" class="mb-4" x-data @change="$el.submit()">
     <label class="flex items-center gap-3 text-sm text-ink">

@@ -1,14 +1,47 @@
-"""Catalog business services: search and soft-deactivate."""
+"""Catalog business services: search, soft-deactivate, price freshness."""
 
 from __future__ import annotations
 
+from datetime import datetime, timedelta
 from decimal import Decimal, InvalidOperation
+from typing import Any
 
 from django.db import transaction
 from django.db.models import Q, QuerySet
 from django.http import HttpRequest
+from django.utils import timezone
 
 from .models import Service, ServiceDefaultEmbed, Supply
+
+FRESH_DAYS = 14
+STALE_DAYS = 45
+
+
+def price_freshness(dt: datetime | None) -> dict[str, str]:
+    """Return traffic-light level/label for catalog price age.
+
+    - green: < 14 days
+    - yellow: 14–45 days
+    - red: > 45 days or missing date
+    """
+    if dt is None:
+        return {"level": "red", "label": "Sin fecha de precio"}
+    now = timezone.now()
+    if timezone.is_naive(dt):
+        dt = timezone.make_aware(dt, timezone.get_current_timezone())
+    age = now - dt
+    if age < timedelta(days=FRESH_DAYS):
+        return {"level": "green", "label": "Precio reciente"}
+    if age <= timedelta(days=STALE_DAYS):
+        return {"level": "yellow", "label": "Precio a revisar"}
+    return {"level": "red", "label": "Precio desactualizado"}
+
+
+def attach_price_freshness(items: list[Any]) -> list[Any]:
+    """Attach ``freshness`` dict on each item for templates."""
+    for item in items:
+        item.freshness = price_freshness(getattr(item, "price_updated_at", None))
+    return items
 
 
 def search_services(query: str = "", *, include_inactive: bool = False) -> QuerySet[Service]:

@@ -44,9 +44,21 @@ En Windows usa `--pool=solo` (el pool prefork por defecto no es fiable aquí).
 
 Smoke checks: `http://127.0.0.1:8000/health/` (público) y login en `/login/`.
 
+### Emisor fiscal
+
+Los datos del emisor (`CompanySettings`: razón social, RIF, dirección, IVA default) **solo se editan en** `/admin/`. No hay pantalla «Empresa» en la app; los PDF siguen leyendo esos datos.
+
 ### PDF (WeasyPrint)
 
-En Render, el worker/web puede necesitar librerías del sistema para WeasyPrint (cairo/pango). Si el build falla, añade el buildpack o apt packages recomendados por WeasyPrint para Linux.
+En local puedes forzar generación en el request (sin worker) con `PDF_SYNC=True` en `.env`. Si el broker Redis no está disponible, el sistema también intenta generar el PDF de forma síncrona y muestra el error en mensajes si WeasyPrint falla.
+
+En **Windows**, WeasyPrint suele fallar sin las librerías GTK/Pango (`libgobject-2.0-0`). La app usa automáticamente **xhtml2pdf** como fallback para que puedas descargar presupuestos y facturas en local. En Linux/Render se prefiere WeasyPrint cuando está disponible.
+
+Worker opcional:
+
+```powershell
+celery -A config worker -l info --pool=solo
+```
 
 Tras migrar, crea el admin:
 

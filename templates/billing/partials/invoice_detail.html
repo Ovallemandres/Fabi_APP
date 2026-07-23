@@ -73,9 +73,44 @@
     </div>
   </div>
 
+  {% if embedded_lines %}
+    <div>
+      <h2 class="mb-1 text-lg font-semibold text-ink">Suministros embebidos (interno)</h2>
+      <p class="mb-2 text-sm text-muted">Auditoría interna; no salen en el PDF del cliente.</p>
+      <div class="overflow-x-auto rounded-2xl bg-surface p-4 shadow-neo-inset">
+        <table class="w-full text-left text-sm">
+          <thead>
+            <tr class="text-muted">
+              <th class="py-2 font-medium">Descripción</th>
+              <th class="font-medium">Cant.</th>
+              <th class="font-medium">Costo USD</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for line in embedded_lines %}
+              <tr class="text-ink">
+                <td class="py-2">↳ {{ line.description }}</td>
+                <td>{{ line.quantity }}</td>
+                <td>{{ line.cost_usd }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% endif %}
+
   <div class="space-y-4 rounded-2xl bg-surface px-5 py-5 shadow-neo">
     <h2 class="text-lg font-semibold text-ink">Acciones</h2>
     <div class="flex flex-wrap gap-3">
+      <form method="post" action="{% url 'billing:invoice_enqueue_pdf' invoice.pk %}">
+        {% csrf_token %}
+        {% include "components/btn_secondary.html" with label="Generar PDF" type="submit" %}
+      </form>
+      {% if invoice.pdf_file %}
+        {% url 'billing:invoice_download_pdf' invoice.pk as inv_pdf_dl %}
+        {% include "components/btn_secondary.html" with href=inv_pdf_dl label="Descargar PDF" %}
+      {% endif %}
       {% if invoice.status == "borrador" %}
         <form method="post" action="{% url 'billing:invoice_emit' invoice.pk %}">
           {% csrf_token %}

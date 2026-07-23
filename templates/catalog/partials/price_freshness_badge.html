@@ -1,0 +1,12 @@
+{% load tz %}
+<span
+  class="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium {{ css_class }}"
+  title="{{ label }}"
+>
+  <span class="h-1.5 w-1.5 rounded-full {% if level == 'green' %}bg-emerald-600{% elif level == 'yellow' %}bg-amber-500{% else %}bg-rose-600{% endif %}"></span>
+  {% if dt %}
+    {{ dt|localtime|date:"d/m/Y" }}
+  {% else %}
+    Sin fecha
+  {% endif %}
+</span>

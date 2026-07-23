@@ -1,4 +1,5 @@
 <article class="space-y-6">
+  {% load l10n %}
   {% url 'billing:index' as billing_hub %}
   <div>
     <a href="{{ billing_hub }}" class="text-sm text-muted transition-all duration-300 ease-in-out hover:text-brand">← Facturación</a>
@@ -23,6 +24,10 @@
       <dd class="text-muted">{{ quote.exchange_rate }}</dd>
     </div>
     <div>
+      <dt class="font-medium text-ink">IVA documento</dt>
+      <dd class="text-muted">{{ quote.iva_pct }}</dd>
+    </div>
+    <div>
       <dt class="font-medium text-ink">Subtotal USD</dt>
       <dd class="text-muted">{{ quote.subtotal_usd }}</dd>
     </div>
@@ -40,8 +45,79 @@
     </div>
   </dl>
 
+  <div class="space-y-4 rounded-2xl bg-surface px-5 py-5 shadow-neo">
+    <h2 class="text-lg font-semibold text-ink">Reglas fiscales de este presupuesto</h2>
+    <p class="text-sm text-muted">
+      Copiadas desde la plantilla al crear. Cambios aquí no afectan otros presupuestos ni la plantilla global.
+    </p>
+    {% if can_edit_fiscal %}
+      <form method="post" action="{% url 'billing:quote_update_iva' quote.pk %}" class="mb-4 max-w-sm space-y-3">
+        {% csrf_token %}
+        {% include "components/form_fields.html" with form=iva_form %}
+        {% include "components/btn_secondary.html" with label="Guardar IVA" type="submit" %}
+      </form>
+    {% endif %}
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-sm">
+        <thead>
+          <tr class="text-muted">
+            <th class="py-2 font-medium">Código</th>
+            <th class="font-medium">Nombre</th>
+            <th class="font-medium">%</th>
+            <th class="font-medium">Activa</th>
+            {% if can_edit_fiscal %}<th class="font-medium"></th>{% endif %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for rule in fiscal_rules %}
+            <tr class="text-ink align-top">
+              <td class="py-2 font-medium">{{ rule.code }}</td>
+              <td>{{ rule.name }}</td>
+              {% if can_edit_fiscal %}
+                <td colspan="3" class="py-2">
+                  <form method="post" action="{% url 'billing:quote_update_fiscal_rule' quote.pk rule.pk %}" class="flex flex-wrap items-end gap-3">
+                    {% csrf_token %}
+                    <div>
+                      <label class="mb-1 block text-xs text-muted" for="id_percentage_{{ rule.pk }}">Porcentaje (fracción, ej. 0.75)</label>
+                      {# unlocalize: locale commas (0,75) break number inputs #}
+                      <input
+                        type="text"
+                        inputmode="decimal"
+                        name="percentage"
+                        id="id_percentage_{{ rule.pk }}"
+                        value="{{ rule.percentage|unlocalize }}"
+                        class="w-32 rounded-2xl border-0 bg-surface px-3 py-2 text-sm text-ink shadow-neo-inset outline-none focus:ring-2 focus:ring-brand"
+                        required
+                      >
+                    </div>
+                    <label class="flex items-center gap-2 text-sm text-ink">
+                      <input
+                        type="checkbox"
+                        name="is_active"
+                        value="1"
+                        class="h-4 w-4 rounded border-0 text-brand shadow-neo-inset focus:ring-2 focus:ring-brand"
+                        {% if rule.is_active %}checked{% endif %}
+                      >
+                      Activa
+                    </label>
+                    <button type="submit" class="rounded-full px-3 py-1.5 text-xs font-medium text-ink shadow-neo-sm transition-all duration-300 ease-in-out hover:text-brand">Guardar</button>
+                  </form>
+                </td>
+              {% else %}
+                <td>{{ rule.percentage }}</td>
+                <td>{% if rule.is_active %}Sí{% else %}No{% endif %}</td>
+              {% endif %}
+            </tr>
+          {% empty %}
+            <tr><td colspan="5" class="py-3 text-muted">Sin reglas copiadas.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
   <div>
-    <h2 class="mb-2 text-lg font-semibold text-ink">Líneas</h2>
+    <h2 class="mb-2 text-lg font-semibold text-ink">Líneas al cliente</h2>
     <div class="overflow-x-auto rounded-2xl bg-surface p-4 shadow-neo">
       <table class="w-full text-left text-sm">
         <thead>
@@ -54,21 +130,48 @@
           </tr>
         </thead>
         <tbody>
-          {% for line in lines %}
+          {% for line in billable_lines %}
             <tr class="text-ink">
               <td class="py-2">{{ line.get_line_type_display }}</td>
-              <td>{% if line.is_embedded %}<span class="text-muted">↳ </span>{% endif %}{{ line.description }}</td>
+              <td>{{ line.description }}</td>
               <td>{{ line.quantity }}</td>
-              <td>{% if line.is_embedded %}—{% else %}{{ line.unit_price_usd }}{% endif %}</td>
+              <td>{{ line.unit_price_usd }}</td>
               <td>{{ line.cost_usd }}</td>
             </tr>
           {% empty %}
-            <tr><td colspan="5" class="py-3 text-muted">Sin líneas.</td></tr>
+            <tr><td colspan="5" class="py-3 text-muted">Sin líneas facturables.</td></tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
   </div>
+
+  {% if embedded_lines %}
+    <div>
+      <h2 class="mb-1 text-lg font-semibold text-ink">Suministros embebidos (interno)</h2>
+      <p class="mb-2 text-sm text-muted">Solo visible para staff. No aparecen en el PDF del cliente.</p>
+      <div class="overflow-x-auto rounded-2xl bg-surface p-4 shadow-neo-inset">
+        <table class="w-full text-left text-sm">
+          <thead>
+            <tr class="text-muted">
+              <th class="py-2 font-medium">Descripción</th>
+              <th class="font-medium">Cant.</th>
+              <th class="font-medium">Costo USD</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for line in embedded_lines %}
+              <tr class="text-ink">
+                <td class="py-2">↳ {{ line.description }}</td>
+                <td>{{ line.quantity }}</td>
+                <td>{{ line.cost_usd }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% endif %}
 
   <div class="space-y-4 rounded-2xl bg-surface px-5 py-5 shadow-neo">
     <h2 class="text-lg font-semibold text-ink">Acciones</h2>
@@ -77,6 +180,10 @@
         {% csrf_token %}
         {% include "components/btn_secondary.html" with label="Generar PDF" type="submit" %}
       </form>
+      {% if quote.pdf_file %}
+        {% url 'billing:quote_download_pdf' quote.pk as pdf_dl %}
+        {% include "components/btn_secondary.html" with href=pdf_dl label="Descargar PDF" %}
+      {% endif %}
       {% if can_send %}
         <form method="post" action="{% url 'billing:quote_mark_enviado' quote.pk %}">
           {% csrf_token %}

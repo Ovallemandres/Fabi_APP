@@ -15,6 +15,7 @@ from .models import Service, ServiceDefaultEmbed, Supply
 from .services import (
     activate_service,
     activate_supply,
+    attach_price_freshness,
     deactivate_service,
     deactivate_supply,
     search_services,
@@ -65,8 +66,10 @@ def service_list(request: HttpRequest) -> HttpResponse:
     """
     q = request.GET.get("q", "")
     include_inactive = request.GET.get("include_inactive") == "1"
+    services = list(search_services(q, include_inactive=include_inactive))
+    attach_price_freshness(services)
     context = {
-        "services": search_services(q, include_inactive=include_inactive),
+        "services": services,
         "q": q,
         "include_inactive": include_inactive,
     }
@@ -211,8 +214,10 @@ def supply_list(request: HttpRequest) -> HttpResponse:
     """
     q = request.GET.get("q", "")
     include_inactive = request.GET.get("include_inactive") == "1"
+    supplies = list(search_supplies(q, include_inactive=include_inactive))
+    attach_price_freshness(supplies)
     context = {
-        "supplies": search_supplies(q, include_inactive=include_inactive),
+        "supplies": supplies,
         "q": q,
         "include_inactive": include_inactive,
     }

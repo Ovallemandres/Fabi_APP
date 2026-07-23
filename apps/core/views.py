@@ -13,13 +13,12 @@ from django.views.decorators.http import require_http_methods, require_POST
 from apps.core.decorators import staff_login_required
 
 from .forms import (
-    CompanySettingsForm,
     DocumentSequenceForm,
     FiscalRuleForm,
     StaffAuthenticationForm,
 )
 from .models import DocumentSequence, FiscalRule
-from .services import get_company_settings, list_fiscal_rules
+from .services import list_fiscal_rules
 
 
 def health(request: HttpRequest) -> JsonResponse:
@@ -73,13 +72,12 @@ def logout_view(request: HttpRequest) -> HttpResponse:
 
 @staff_login_required
 def settings_hub(request: HttpRequest) -> HttpResponse:
-    """Configuration section hub.
+    """Configuration section hub (templates + sequences; issuer only via admin).
 
     Context:
-        - company_url, fiscal_url, sequences_url: str
+        - fiscal_url, sequences_url: str
     """
     context = {
-        "company_url": reverse("core:company_settings"),
         "fiscal_url": reverse("core:fiscal_rule_list"),
         "sequences_url": reverse("core:sequence_list"),
     }
@@ -101,28 +99,12 @@ def _hx_redirect(url: str) -> HttpResponse:
 @staff_login_required
 @require_http_methods(["GET", "POST"])
 def company_settings_edit(request: HttpRequest) -> HttpResponse:
-    """Edit issuer company settings.
-
-    Context:
-        - form: CompanySettingsForm
-        - company: CompanySettings
-    """
-    company = get_company_settings()
-    form = CompanySettingsForm(request.POST or None, instance=company)
-    if request.method == "POST" and form.is_valid():
-        form.save()
-        messages.success(request, "Datos del emisor actualizados.")
-        url = reverse("core:company_settings")
-        if _is_htmx(request):
-            return _hx_redirect(url)
-        return redirect(url)
-    context = {"form": form, "company": company}
-    template = (
-        "core/partials/company_form.html"
-        if _is_htmx(request)
-        else "core/company_settings.html"
+    """Issuer data is admin-only; redirect staff to settings hub."""
+    messages.info(
+        request,
+        "Los datos del emisor solo se editan en el panel de administración (/admin/).",
     )
-    return render(request, template, context)
+    return redirect("core:settings_hub")
 
 
 @staff_login_required

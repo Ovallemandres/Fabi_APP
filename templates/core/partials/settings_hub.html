@@ -1,11 +1,13 @@
 <section class="space-y-6">
   <div>
-    <h1 class="text-3xl font-bold text-ink">Configuración</h1>
-    <p class="mt-1 text-muted">Emisor, motor fiscal y numeración de documentos.</p>
+    <h1 class="text-3xl font-bold text-[#202020]">Configuración</h1>
+    <p class="mt-1 text-[#606060]">
+      Plantillas fiscales (defaults para nuevos presupuestos) y numeración.
+      Los datos del emisor solo se gestionan en <code>/admin/</code>.
+    </p>
   </div>
   <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-    {% include "components/section_card.html" with href=company_url title="Empresa" description="Razón social, RIF, dirección e IVA del emisor." %}
-    {% include "components/section_card.html" with href=fiscal_url title="Reglas fiscales" description="Retenciones configurables (IVA, ISLR, etc.)." %}
+    {% include "components/section_card.html" with href=fiscal_url title="Reglas fiscales (plantilla)" description="Defaults que se copian a cada presupuesto nuevo; luego se ajustan por documento." %}
     {% include "components/section_card.html" with href=sequences_url title="Secuencias" description="Prefijos y contadores PRE / FAC." %}
   </div>
 </section>

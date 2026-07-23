@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Any, Iterable
 
-from apps.core.models import FiscalAppliesTo, FiscalBase, FiscalRule
+from apps.core.models import FiscalAppliesTo, FiscalBase
 from apps.core.services import get_company_settings, list_active_fiscal_rules
 
 from apps.billing.models import LineType, Quote, QuoteLine
@@ -65,8 +65,8 @@ def calculate_quote_totals(
     *,
     iva_pct: Decimal | None = None,
 ) -> QuoteTotals:
-    """Subtotal/IVA/total in USD for a quote using company IVA %."""
-    pct = iva_pct if iva_pct is not None else get_company_settings().iva_pct
+    """Subtotal/IVA/total in USD for a quote using the quote's IVA %."""
+    pct = iva_pct if iva_pct is not None else quote.iva_pct
     subtotal = ZERO
     for line in billable_quote_lines(quote.lines.all()):
         subtotal += _q(line.quantity * line.unit_price_usd)
@@ -84,10 +84,10 @@ def calculate_quote_totals(
 
 
 def _rules_for_group(
-    rules: Iterable[FiscalRule],
+    rules: Iterable[Any],
     group: str,
-) -> list[FiscalRule]:
-    result: list[FiscalRule] = []
+) -> list[Any]:
+    result: list[Any] = []
     for rule in rules:
         if rule.applies_to == FiscalAppliesTo.BOTH or rule.applies_to == group:
             result.append(rule)
@@ -99,7 +99,7 @@ def calculate_group_retenciones(
     base_imponible: Decimal,
     iva: Decimal,
     group: str,
-    rules: Iterable[FiscalRule],
+    rules: Iterable[Any],
 ) -> tuple[list[dict[str, Any]], Decimal]:
     """Apply active fiscal rules to one line-type group (service or supply)."""
     items: list[dict[str, Any]] = []
@@ -127,11 +127,12 @@ def calculate_invoice_totals(
     billable_lines: Iterable[dict[str, Any]],
     exchange_rate: Decimal,
     iva_pct: Decimal | None = None,
-    rules: Iterable[FiscalRule] | None = None,
+    rules: Iterable[Any] | None = None,
 ) -> InvoiceTotals:
     """Compute VES totals + retenciones by group from USD billable line dicts.
 
     Each line dict needs: line_type (service|supply), quantity, unit_price_usd.
+    Prefer passing quote.iva_pct and QuoteFiscalRule rows from the source quote.
     """
     pct = iva_pct if iva_pct is not None else get_company_settings().iva_pct
     active_rules = list(rules) if rules is not None else list(list_active_fiscal_rules())

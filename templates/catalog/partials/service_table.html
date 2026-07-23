@@ -1,10 +1,12 @@
 {% if services %}
+  {% load catalog_extras %}
   <div class="overflow-x-auto rounded-2xl bg-surface p-4 shadow-neo">
     <table class="w-full text-left text-sm">
       <thead>
         <tr class="text-muted">
           <th class="px-2 py-2 font-medium">Nombre</th>
           <th class="px-2 py-2 font-medium">Precio ref. USD</th>
+          <th class="px-2 py-2 font-medium">Frescura</th>
           <th class="px-2 py-2 font-medium">Estado</th>
           <th class="px-2 py-2 font-medium"></th>
         </tr>
@@ -14,6 +16,9 @@
           <tr class="text-ink transition-all duration-300 ease-in-out hover:bg-shadow-dark/10">
             <td class="px-2 py-3 font-medium">{{ service.name }}</td>
             <td class="px-2 py-3 text-muted">{{ service.default_unit_price_usd }}</td>
+            <td class="px-2 py-3">
+              {% price_freshness_badge dt=service.price_updated_at freshness=service.freshness %}
+            </td>
             <td class="px-2 py-3">
               {% if service.is_active %}
                 {% include "components/badge.html" with label="Activo" %}

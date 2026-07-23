@@ -1,4 +1,5 @@
 <section class="space-y-6">
+  {% load catalog_extras %}
   <div>
     <a href="{% url 'billing:quote_create' %}" class="text-sm text-muted transition-all duration-300 ease-in-out hover:text-brand">← Cambiar camión</a>
     <h1 class="mt-2 text-2xl font-bold text-ink">Presupuesto de {{ kind_label|lower }}</h1>
@@ -56,8 +57,11 @@
                   {% if form.selected.value %}checked{% endif %}
                 >
                 <span class="flex-1 font-medium text-ink">{{ form.initial.name|default:form.name.value }}</span>
-                <span class="text-sm font-medium text-brand">
-                  USD {{ form.initial.catalog_price_usd|default:form.catalog_price_usd.value }}
+                <span class="flex items-center gap-2">
+                  {% price_freshness_badge dt=form.price_updated_at freshness=form.freshness %}
+                  <span class="text-sm font-medium text-brand">
+                    USD {{ form.initial.catalog_price_usd|default:form.catalog_price_usd.value }}
+                  </span>
                 </span>
               </label>
 
@@ -92,7 +96,7 @@
                     <div class="flex flex-wrap items-center justify-between gap-2">
                       <div>
                         <h3 class="text-sm font-semibold text-ink">Suministros embebidos</h3>
-                        <p class="text-xs text-muted">Sin precio al cliente; solo costo interno. Visibles en presupuesto, ocultos en factura.</p>
+                        <p class="text-xs text-muted">Sin precio al cliente; solo costo interno. Visibles al staff; ocultos en PDF/factura al cliente.</p>
                       </div>
                       <button
                         type="button"

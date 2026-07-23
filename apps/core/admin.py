@@ -7,7 +7,23 @@ from .models import CompanySettings, DocumentSequence, FiscalRule
 
 @admin.register(CompanySettings)
 class CompanySettingsAdmin(admin.ModelAdmin):
+    """Emisor fiscal: solo editable aquí (sin pantalla en la app)."""
+
     list_display = ("legal_name", "rif", "iva_pct", "updated_at")
+    fieldsets = (
+        (
+            "Emisor (solo admin)",
+            {
+                "description": "Estos datos aparecen en PDF. No hay pantalla de Empresa en la app.",
+                "fields": (
+                    "legal_name",
+                    "rif",
+                    "fiscal_address",
+                    "iva_pct",
+                ),
+            },
+        ),
+    )
 
     def has_add_permission(self, request) -> bool:  # type: ignore[no-untyped-def]
         return not CompanySettings.objects.exists()

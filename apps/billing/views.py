@@ -11,25 +11,30 @@ from django.urls import reverse
 from django.views.decorators.http import require_http_methods, require_POST
 
 from apps.catalog.models import Service, Supply
+from apps.catalog.services import price_freshness
 from apps.core.decorators import staff_login_required
 from apps.fleet.models import Truck
 
 from .forms import (
     QuoteConvertForm,
+    QuoteFiscalRuleEditForm,
+    QuoteIvaForm,
     QuoteWizardMetaForm,
     WizardServiceFormSet,
     WizardSupplyFormSet,
 )
-from .models import Invoice, InvoiceStatus, Quote, QuoteKind, QuoteStatus
+from .models import Invoice, InvoiceStatus, Quote, QuoteFiscalRule, QuoteKind, QuoteStatus
+from .services.pdf import run_generate_document_pdf
 from .services.quotes import (
     convert_quote_to_invoice,
+    copy_fiscal_rules_to_quote,
     create_quote_with_lines,
     emit_invoice,
     mark_quote_aceptado,
     mark_quote_enviado,
+    refresh_quote_totals,
     void_invoice,
 )
-from .tasks import generate_document_pdf
 
 
 def _is_htmx(request: HttpRequest) -> bool:
@@ -235,6 +240,8 @@ def quote_wizard(request: HttpRequest, truck_id: int, kind: str) -> HttpResponse
             for s in catalog_items
         ]
         FormSet = WizardServiceFormSet
+        freshness_by_index = [price_freshness(s.price_updated_at) for s in catalog_items]
+        price_dates = [s.price_updated_at for s in catalog_items]
     else:
         catalog_items = list(Supply.objects.filter(is_active=True).order_by("name"))
         initial = [
@@ -250,6 +257,8 @@ def quote_wizard(request: HttpRequest, truck_id: int, kind: str) -> HttpResponse
             for s in catalog_items
         ]
         FormSet = WizardSupplyFormSet
+        freshness_by_index = [price_freshness(s.price_updated_at) for s in catalog_items]
+        price_dates = [s.price_updated_at for s in catalog_items]
 
     if request.method == "POST":
         meta_form = QuoteWizardMetaForm(request.POST)
@@ -369,6 +378,16 @@ def quote_wizard(request: HttpRequest, truck_id: int, kind: str) -> HttpResponse
             form.embed_rows = rows
             form.has_default_embeds = bool(defaults)
 
+    for index, form in enumerate(line_formset):
+        form.freshness = (
+            freshness_by_index[index]
+            if index < len(freshness_by_index)
+            else price_freshness(None)
+        )
+        form.price_updated_at = (
+            price_dates[index] if index < len(price_dates) else None
+        )
+
     context = {
         "truck": truck,
         "quote_kind": kind,
@@ -408,10 +427,23 @@ def quote_detail(request: HttpRequest, pk: int) -> HttpResponse:
         Quote.objects.select_related("truck", "truck__owner", "truck__driver"),
         pk=pk,
     )
+    copy_fiscal_rules_to_quote(quote)
+    lines = list(quote.lines.select_related("service", "supply", "parent_line").all())
+    billable_lines = [ln for ln in lines if not ln.is_embedded]
+    embedded_lines = [ln for ln in lines if ln.is_embedded]
+    can_edit_fiscal = quote.status not in {
+        QuoteStatus.FACTURADO,
+        QuoteStatus.ANULADO,
+    }
     context = {
         "quote": quote,
-        "lines": quote.lines.select_related("service", "supply", "parent_line").all(),
+        "lines": lines,
+        "billable_lines": billable_lines,
+        "embedded_lines": embedded_lines,
+        "fiscal_rules": quote.fiscal_rules.all(),
+        "iva_form": QuoteIvaForm(instance=quote),
         "convert_form": QuoteConvertForm(),
+        "can_edit_fiscal": can_edit_fiscal,
         "can_send": quote.status in {
             QuoteStatus.BORRADOR,
             QuoteStatus.CONFIRMAR_PRESUPUESTO_FACTURA_ANULADA,
@@ -433,6 +465,42 @@ def quote_detail(request: HttpRequest, pk: int) -> HttpResponse:
         else "billing/quote_detail.html"
     )
     return render(request, template, context)
+
+
+@staff_login_required
+@require_POST
+def quote_update_iva(request: HttpRequest, pk: int) -> HttpResponse:
+    """Update IVA % for this quote only and recalc totals."""
+    quote = get_object_or_404(Quote, pk=pk)
+    if quote.status in {QuoteStatus.FACTURADO, QuoteStatus.ANULADO}:
+        messages.error(request, "No se puede editar el IVA de este presupuesto.")
+        return redirect("billing:quote_detail", pk=pk)
+    form = QuoteIvaForm(request.POST, instance=quote)
+    if form.is_valid():
+        form.save()
+        refresh_quote_totals(quote)
+        messages.success(request, "IVA del presupuesto actualizado.")
+    else:
+        messages.error(request, "IVA inválido.")
+    return redirect("billing:quote_detail", pk=pk)
+
+
+@staff_login_required
+@require_POST
+def quote_update_fiscal_rule(request: HttpRequest, pk: int, rule_pk: int) -> HttpResponse:
+    """Edit a per-quote fiscal rule (percentage / active) and leave global template untouched."""
+    quote = get_object_or_404(Quote, pk=pk)
+    if quote.status in {QuoteStatus.FACTURADO, QuoteStatus.ANULADO}:
+        messages.error(request, "No se pueden editar las reglas de este presupuesto.")
+        return redirect("billing:quote_detail", pk=pk)
+    rule = get_object_or_404(QuoteFiscalRule, pk=rule_pk, quote=quote)
+    form = QuoteFiscalRuleEditForm(request.POST, instance=rule)
+    if form.is_valid():
+        form.save()
+        messages.success(request, f"Regla «{rule.code}» actualizada en este presupuesto.")
+    else:
+        messages.error(request, "No se pudo actualizar la regla.")
+    return redirect("billing:quote_detail", pk=pk)
 
 
 @staff_login_required
@@ -565,15 +633,24 @@ def invoice_detail(request: HttpRequest, pk: int) -> HttpResponse:
 @staff_login_required
 @require_POST
 def invoice_emit(request: HttpRequest, pk: int) -> HttpResponse:
-    """Emit invoice and enqueue PDF."""
+    """Emit invoice and generate PDF (sync or Celery)."""
     invoice = get_object_or_404(Invoice, pk=pk)
     try:
         emit_invoice(invoice)
     except ValueError as exc:
         messages.error(request, str(exc))
         return redirect("billing:invoice_detail", pk=pk)
-    generate_document_pdf.delay("invoice", invoice.pk)
-    messages.success(request, "Factura emitida; PDF encolado.")
+    try:
+        result = run_generate_document_pdf("invoice", invoice.pk)
+        if result.get("status") == "queued":
+            messages.success(request, "Factura emitida; PDF encolado.")
+        else:
+            messages.success(request, "Factura emitida; PDF generado.")
+    except Exception as exc:
+        messages.error(
+            request,
+            f"Factura emitida, pero falló el PDF: {exc.__class__.__name__}: {exc}",
+        )
     response = redirect("billing:invoice_detail", pk=pk)
     if _is_htmx(request):
         r = HttpResponse(status=204)
@@ -596,14 +673,74 @@ def invoice_void(request: HttpRequest, pk: int) -> HttpResponse:
 @staff_login_required
 @require_POST
 def quote_enqueue_pdf(request: HttpRequest, pk: int) -> HttpResponse:
-    """Enqueue quote PDF generation."""
+    """Generate quote PDF (sync fallback when Celery/broker unavailable)."""
     quote = get_object_or_404(Quote, pk=pk)
     refresh_quote_totals(quote)
-    generate_document_pdf.delay("quote", quote.pk)
-    messages.success(request, "PDF de presupuesto encolado.")
+    try:
+        result = run_generate_document_pdf("quote", quote.pk)
+        if result.get("status") == "queued":
+            messages.success(request, "PDF de presupuesto encolado.")
+        else:
+            messages.success(request, "PDF de presupuesto generado.")
+    except Exception as exc:
+        messages.error(
+            request,
+            f"No se pudo generar el PDF: {exc.__class__.__name__}: {exc}",
+        )
     if _is_htmx(request):
         r = HttpResponse(status=204)
         r["HX-Redirect"] = reverse("billing:quote_detail", kwargs={"pk": pk})
         r["HX-Trigger"] = "billingQuotePdfQueued"
         return r
     return redirect("billing:quote_detail", pk=pk)
+
+
+@staff_login_required
+@require_http_methods(["GET"])
+def quote_download_pdf(request: HttpRequest, pk: int) -> HttpResponse:
+    """Authenticated staff download of quote PDF."""
+    from django.http import FileResponse, Http404
+
+    quote = get_object_or_404(Quote, pk=pk)
+    if not quote.pdf_file:
+        raise Http404("PDF no generado aún.")
+    return FileResponse(
+        quote.pdf_file.open("rb"),
+        as_attachment=True,
+        filename=f"{quote.number}.pdf",
+    )
+
+
+@staff_login_required
+@require_POST
+def invoice_enqueue_pdf(request: HttpRequest, pk: int) -> HttpResponse:
+    """Generate invoice PDF on demand."""
+    invoice = get_object_or_404(Invoice, pk=pk)
+    try:
+        result = run_generate_document_pdf("invoice", invoice.pk)
+        if result.get("status") == "queued":
+            messages.success(request, "PDF de factura encolado.")
+        else:
+            messages.success(request, "PDF de factura generado.")
+    except Exception as exc:
+        messages.error(
+            request,
+            f"No se pudo generar el PDF: {exc.__class__.__name__}: {exc}",
+        )
+    return redirect("billing:invoice_detail", pk=pk)
+
+
+@staff_login_required
+@require_http_methods(["GET"])
+def invoice_download_pdf(request: HttpRequest, pk: int) -> HttpResponse:
+    """Authenticated staff download of invoice PDF."""
+    from django.http import FileResponse, Http404
+
+    invoice = get_object_or_404(Invoice, pk=pk)
+    if not invoice.pdf_file:
+        raise Http404("PDF no generado aún.")
+    return FileResponse(
+        invoice.pdf_file.open("rb"),
+        as_attachment=True,
+        filename=f"{invoice.number}.pdf",
+    )

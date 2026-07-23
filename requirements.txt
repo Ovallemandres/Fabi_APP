@@ -6,3 +6,4 @@ redis==6.2.0
 whitenoise==6.9.0
 gunicorn==23.0.0
 weasyprint==65.1
+xhtml2pdf==0.2.16

@@ -4,9 +4,11 @@ from __future__ import annotations
 
 from decimal import Decimal
 
-from django.core.validators import MinValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Q
+
+from apps.core.models import FiscalAppliesTo, FiscalBase
 
 
 class QuoteStatus(models.TextChoices):
@@ -78,6 +80,14 @@ class Quote(models.Model):
     )
     total_usd = models.DecimalField(
         max_digits=18, decimal_places=2, default=Decimal("0.00")
+    )
+    iva_pct = models.DecimalField(
+        "IVA del presupuesto (%)",
+        max_digits=6,
+        decimal_places=4,
+        default=Decimal("0.1600"),
+        validators=[MinValueValidator(Decimal("0")), MaxValueValidator(Decimal("1"))],
+        help_text="Fracción decimal copiada desde la empresa al crear; editable solo en este documento.",
     )
     notes = models.TextField(blank=True, default="")
     pdf_file = models.FileField(upload_to="pdfs/quotes/", blank=True, null=True)
@@ -166,6 +176,49 @@ class QuoteLine(models.Model):
         if self.is_embedded or self.line_type == LineType.EMBEDDED_SUPPLY:
             return Decimal("0.00")
         return (self.quantity * self.unit_price_usd).quantize(Decimal("0.01"))
+
+
+class QuoteFiscalRule(models.Model):
+    """Snapshot editable de reglas fiscales plantilla, por presupuesto."""
+
+    quote = models.ForeignKey(
+        Quote,
+        on_delete=models.CASCADE,
+        related_name="fiscal_rules",
+        verbose_name="Presupuesto",
+    )
+    code = models.CharField("Código", max_length=50)
+    name = models.CharField("Nombre", max_length=255)
+    percentage = models.DecimalField(
+        "Porcentaje",
+        max_digits=8,
+        decimal_places=6,
+        validators=[MinValueValidator(Decimal("0")), MaxValueValidator(Decimal("1"))],
+        help_text="Fracción decimal, ej. 0.75 = 75%.",
+    )
+    base = models.CharField("Base", max_length=20, choices=FiscalBase.choices)
+    applies_to = models.CharField(
+        "Aplica a",
+        max_length=20,
+        choices=FiscalAppliesTo.choices,
+        default=FiscalAppliesTo.BOTH,
+    )
+    is_active = models.BooleanField("Activo", default=True, db_index=True)
+    sort_order = models.PositiveIntegerField("Orden", default=0)
+
+    class Meta:
+        verbose_name = "Regla fiscal del presupuesto"
+        verbose_name_plural = "Reglas fiscales del presupuesto"
+        ordering = ["sort_order", "code"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["quote", "code"],
+                name="billing_quotefiscalrule_quote_code_uniq",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.quote.number}: {self.code}"
 
 
 class Invoice(models.Model):

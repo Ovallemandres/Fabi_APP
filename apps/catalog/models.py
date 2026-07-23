@@ -6,6 +6,7 @@ from decimal import Decimal
 
 from django.core.validators import MinValueValidator
 from django.db import models
+from django.utils import timezone
 
 
 class Service(models.Model):
@@ -28,6 +29,13 @@ class Service(models.Model):
         default=Decimal("0.00"),
         validators=[MinValueValidator(Decimal("0"))],
     )
+    price_updated_at = models.DateTimeField(
+        "Precio actualizado",
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text="Se actualiza al cambiar precio o costo de referencia.",
+    )
     is_active = models.BooleanField("Activo", default=True, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -39,6 +47,21 @@ class Service(models.Model):
 
     def __str__(self) -> str:
         return self.name
+
+    def save(self, *args, **kwargs) -> None:  # type: ignore[no-untyped-def]
+        if self.pk:
+            try:
+                previous = Service.objects.get(pk=self.pk)
+            except Service.DoesNotExist:
+                previous = None
+            if previous is not None and (
+                previous.default_unit_price_usd != self.default_unit_price_usd
+                or previous.default_cost_usd != self.default_cost_usd
+            ):
+                self.price_updated_at = timezone.now()
+        elif self.price_updated_at is None:
+            self.price_updated_at = timezone.now()
+        super().save(*args, **kwargs)
 
 
 class Supply(models.Model):
@@ -62,6 +85,13 @@ class Supply(models.Model):
         default=Decimal("0.00"),
         validators=[MinValueValidator(Decimal("0"))],
     )
+    price_updated_at = models.DateTimeField(
+        "Precio actualizado",
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text="Se actualiza al cambiar precio o costo de referencia.",
+    )
     is_active = models.BooleanField("Activo", default=True, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -73,6 +103,21 @@ class Supply(models.Model):
 
     def __str__(self) -> str:
         return self.name
+
+    def save(self, *args, **kwargs) -> None:  # type: ignore[no-untyped-def]
+        if self.pk:
+            try:
+                previous = Supply.objects.get(pk=self.pk)
+            except Supply.DoesNotExist:
+                previous = None
+            if previous is not None and (
+                previous.default_unit_price_usd != self.default_unit_price_usd
+                or previous.default_cost_usd != self.default_cost_usd
+            ):
+                self.price_updated_at = timezone.now()
+        elif self.price_updated_at is None:
+            self.price_updated_at = timezone.now()
+        super().save(*args, **kwargs)
 
 
 class ServiceDefaultEmbed(models.Model):

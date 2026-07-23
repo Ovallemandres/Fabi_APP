@@ -1,12 +1,15 @@
-"""Admin for billing documents."""
-
 from django.contrib import admin
 
-from .models import Invoice, InvoiceLine, Quote, QuoteLine
+from .models import Invoice, InvoiceLine, Quote, QuoteFiscalRule, QuoteLine
 
 
 class QuoteLineInline(admin.TabularInline):
     model = QuoteLine
+    extra = 0
+
+
+class QuoteFiscalRuleInline(admin.TabularInline):
+    model = QuoteFiscalRule
     extra = 0
 
 
@@ -17,13 +20,14 @@ class QuoteAdmin(admin.ModelAdmin):
         "quote_kind",
         "truck",
         "status",
+        "iva_pct",
         "exchange_rate",
         "total_usd",
         "updated_at",
     )
     list_filter = ("status", "quote_kind")
     search_fields = ("number", "truck__plate")
-    inlines = [QuoteLineInline]
+    inlines = [QuoteLineInline, QuoteFiscalRuleInline]
 
 
 class InvoiceLineInline(admin.TabularInline):

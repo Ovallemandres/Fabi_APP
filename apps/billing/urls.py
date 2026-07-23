@@ -30,8 +30,29 @@ urlpatterns = [
     path("quotes/<int:pk>/accept/", views.quote_mark_aceptado, name="quote_mark_aceptado"),
     path("quotes/<int:pk>/convert/", views.quote_convert, name="quote_convert"),
     path("quotes/<int:pk>/pdf/", views.quote_enqueue_pdf, name="quote_enqueue_pdf"),
+    path(
+        "quotes/<int:pk>/pdf/download/",
+        views.quote_download_pdf,
+        name="quote_download_pdf",
+    ),
+    path("quotes/<int:pk>/iva/", views.quote_update_iva, name="quote_update_iva"),
+    path(
+        "quotes/<int:pk>/fiscal-rules/<int:rule_pk>/",
+        views.quote_update_fiscal_rule,
+        name="quote_update_fiscal_rule",
+    ),
     path("invoices/", views.invoice_list, name="invoice_list"),
     path("invoices/<int:pk>/", views.invoice_detail, name="invoice_detail"),
     path("invoices/<int:pk>/emit/", views.invoice_emit, name="invoice_emit"),
     path("invoices/<int:pk>/void/", views.invoice_void, name="invoice_void"),
+    path(
+        "invoices/<int:pk>/pdf/",
+        views.invoice_enqueue_pdf,
+        name="invoice_enqueue_pdf",
+    ),
+    path(
+        "invoices/<int:pk>/pdf/download/",
+        views.invoice_download_pdf,
+        name="invoice_download_pdf",
+    ),
 ]

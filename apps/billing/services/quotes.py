@@ -8,7 +8,11 @@ from typing import Any
 from django.db import transaction
 
 from apps.core.models import DocumentKind
-from apps.core.services import allocate_document_number
+from apps.core.services import (
+    allocate_document_number,
+    get_company_settings,
+    list_active_fiscal_rules,
+)
 
 from apps.billing.models import (
     Invoice,
@@ -16,11 +20,40 @@ from apps.billing.models import (
     InvoiceStatus,
     LineType,
     Quote,
+    QuoteFiscalRule,
     QuoteKind,
     QuoteLine,
     QuoteStatus,
 )
 from apps.billing.services.calculations import calculate_invoice_totals, calculate_quote_totals
+
+
+def copy_fiscal_rules_to_quote(quote: Quote) -> list[QuoteFiscalRule]:
+    """Clone active global FiscalRule templates onto this quote (idempotent if empty)."""
+    if quote.fiscal_rules.exists():
+        return list(quote.fiscal_rules.all())
+    created: list[QuoteFiscalRule] = []
+    for rule in list_active_fiscal_rules():
+        created.append(
+            QuoteFiscalRule(
+                quote=quote,
+                code=rule.code,
+                name=rule.name,
+                percentage=rule.percentage,
+                base=rule.base,
+                applies_to=rule.applies_to,
+                is_active=rule.is_active,
+                sort_order=rule.sort_order,
+            )
+        )
+    return QuoteFiscalRule.objects.bulk_create(created)
+
+
+def active_quote_fiscal_rules(quote: Quote):
+    """Active rules for invoice calc; copy from templates if the quote has none."""
+    if not quote.fiscal_rules.exists():
+        copy_fiscal_rules_to_quote(quote)
+    return quote.fiscal_rules.filter(is_active=True).order_by("sort_order", "code")
 
 
 @transaction.atomic
@@ -35,14 +68,18 @@ def create_quote(
     if quote_kind not in {QuoteKind.SERVICES, QuoteKind.SUPPLIES}:
         raise ValueError("Tipo de presupuesto inválido.")
     number = allocate_document_number(DocumentKind.QUOTE)
-    return Quote.objects.create(
+    company = get_company_settings()
+    quote = Quote.objects.create(
         number=number,
         truck_id=truck_id,
         quote_kind=quote_kind,
         exchange_rate=exchange_rate,
         notes=notes,
         status=QuoteStatus.BORRADOR,
+        iva_pct=company.iva_pct,
     )
+    copy_fiscal_rules_to_quote(quote)
+    return quote
 
 
 def refresh_quote_totals(quote: Quote) -> Quote:
@@ -232,6 +269,8 @@ def convert_quote_to_invoice(quote: Quote, *, exchange_rate: Decimal) -> Invoice
     totals = calculate_invoice_totals(
         billable_lines=billable,
         exchange_rate=exchange_rate,
+        iva_pct=quote.iva_pct,
+        rules=list(active_quote_fiscal_rules(quote)),
     )
 
     invoice = Invoice.objects.create(
